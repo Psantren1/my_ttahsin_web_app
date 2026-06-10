@@ -367,7 +367,7 @@ export default function ManajemenSantri() {
                   <input
                     type="text"
                     placeholder="Cari NIS, Nama, Username..."
-                    className="pl-10 pr-4 py-2 bg-tosca-50/50 border border-tosca-100 rounded-xl text-sm focus:ring-2 focus:ring-tosca-500 focus:border-tosca-500 transition-all w-full sm:w-64"
+                    className="pl-10 pr-4 py-2 bg-tosca-50/50 border border-tosca-100 rounded-xl text-sm text-[#0B7D72] focus:ring-2 focus:ring-tosca-500 focus:border-tosca-500 transition-all w-full sm:w-64"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -508,7 +508,7 @@ export default function ManajemenSantri() {
                     value={formData.nis}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                     placeholder="Contoh: 001"
                   />
                 </div>
@@ -520,7 +520,7 @@ export default function ManajemenSantri() {
                     value={formData.nisn}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm bg-tosca-50/50"
+                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] bg-tosca-50/50"
                     placeholder="Contoh: 1234567890"
                   />
                 </div>
@@ -535,7 +535,7 @@ export default function ManajemenSantri() {
                   value={formData.nama_lengkap}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                   placeholder="Nama lengkap sesuai KK"
                 />
               </div>
@@ -548,7 +548,7 @@ export default function ManajemenSantri() {
                   value={formData.kelas_id}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                 >
                   <option value="">-- Pilih Kelas --</option>
                   {kelasList.map(k => (
@@ -567,7 +567,7 @@ export default function ManajemenSantri() {
                     value={formData.nama_ayah}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                     placeholder="Nama ayah kandung"
                   />
                 </div>
@@ -579,7 +579,7 @@ export default function ManajemenSantri() {
                     value={formData.nama_ibu}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                     placeholder="Nama ibu kandung"
                   />
                 </div>
@@ -595,7 +595,7 @@ export default function ManajemenSantri() {
                     value={formData.pekerjaan_ayah}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                     placeholder="Contoh: Wiraswasta"
                   />
                 </div>
@@ -607,7 +607,7 @@ export default function ManajemenSantri() {
                     value={formData.pekerjaan_ibu}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                     placeholder="Contoh: Ibu Rumah Tangga"
                   />
                 </div>
@@ -622,7 +622,7 @@ export default function ManajemenSantri() {
                   value={formData.no_wa}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                   placeholder="Contoh: 6281234567890"
                 />
               </div>
@@ -639,7 +639,7 @@ export default function ManajemenSantri() {
                       value={formData.username}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2.5 rounded-xl border border-tosca-200 focus:ring-2 focus:ring-tosca-500 text-sm font-mono bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-tosca-200 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-mono bg-white"
                       placeholder="username"
                     />
                   </div>
@@ -652,7 +652,7 @@ export default function ManajemenSantri() {
                         value={formData.password}
                         onChange={handleInputChange}
                         required={!isEditMode}
-                        className="w-full px-4 py-2.5 pr-10 rounded-xl border border-tosca-200 focus:ring-2 focus:ring-tosca-500 text-sm font-mono bg-white"
+                        className="w-full px-4 py-2.5 pr-10 rounded-xl border border-tosca-200 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-mono bg-white"
                         placeholder={isEditMode ? 'Kosongkan jika tidak diubah' : 'Password default'}
                       />
                       <button

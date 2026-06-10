@@ -210,16 +210,16 @@ export default function ManajemenJadwal() {
             <form className="p-6 space-y-5" onSubmit={handleCreateSchedule}>
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-tosca-700 ml-1">Nama Kegiatan</label>
-                <input type="text" value={formSesi} onChange={e => setFormSesi(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-medium" placeholder="Contoh: Tahfizh Sore" />
+                <input type="text" value={formSesi} onChange={e => setFormSesi(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-medium" placeholder="Contoh: Tahfizh Sore" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-tosca-700 ml-1">Jam Mulai</label>
-                  <input type="time" value={formJamMulai} onChange={e => setFormJamMulai(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-medium" />
+                  <input type="time" value={formJamMulai} onChange={e => setFormJamMulai(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-medium" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-tosca-700 ml-1">Jam Selesai</label>
-                  <input type="time" value={formJamSelesai} onChange={e => setFormJamSelesai(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-medium" />
+                  <input type="time" value={formJamSelesai} onChange={e => setFormJamSelesai(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-medium" />
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -232,7 +232,7 @@ export default function ManajemenJadwal() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-tosca-700 ml-1">Lokasi</label>
-                <input type="text" value={formLokasi} onChange={e => setFormLokasi(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-medium" placeholder="Nama ruangan atau gedung" />
+                <input type="text" value={formLokasi} onChange={e => setFormLokasi(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-medium" placeholder="Nama ruangan atau gedung" />
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 border-2 border-tosca-50 text-tosca-600 rounded-xl font-bold hover:bg-tosca-50 transition-colors">Batal</button>

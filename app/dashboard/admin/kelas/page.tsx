@@ -138,7 +138,7 @@ export default function ManajemenKelas() {
             <form className="p-6 space-y-5" onSubmit={handleCreateClass}>
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-tosca-700 ml-1">Nama Kelas</label>
-                <input type="text" value={formNama} onChange={e => setFormNama(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-medium" placeholder="Contoh: 7B - Tahfizh Dasar" />
+                <input type="text" value={formNama} onChange={e => setFormNama(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-medium" placeholder="Contoh: 7B - Tahfizh Dasar" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-tosca-700 ml-1">Wali Kelas</label>
@@ -151,7 +151,7 @@ export default function ManajemenKelas() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-tosca-700 ml-1">Tahun Ajaran</label>
-                <input type="text" value={settings.tahunAjaran} className="w-full px-4 py-3 rounded-xl border border-tosca-100 bg-tosca-50/50 text-tosca-500 text-sm font-medium cursor-not-allowed" disabled readOnly />
+                <input type="text" value={settings.tahunAjaran} className="w-full px-4 py-3 rounded-xl border border-tosca-100 bg-tosca-50/50 text-tosca-500 text-sm text-[#0B7D72] font-medium cursor-not-allowed" disabled readOnly />
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 border-2 border-tosca-50 text-tosca-600 rounded-xl font-bold hover:bg-tosca-50 transition-colors">Batal</button>
