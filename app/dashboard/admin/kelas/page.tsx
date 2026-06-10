@@ -96,7 +96,7 @@ export default function ManajemenKelas() {
                   <div className="flex items-center justify-between py-2 border-b border-tosca-50">
                     <div className="flex items-center gap-2 text-tosca-600 font-semibold">
                       <UserIcon size={18} />
-                      <span className="text-sm">Wali Kelas</span>
+                      <span className="text-sm">Musyrif/ah</span>
                     </div>
                     <span className="text-sm font-bold text-tosca-900">{kelas.wali}</span>
                   </div>
@@ -141,7 +141,7 @@ export default function ManajemenKelas() {
                 <input type="text" value={formNama} onChange={e => setFormNama(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-medium" placeholder="Contoh: 7B - Tahfizh Dasar" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-tosca-700 ml-1">Wali Kelas</label>
+                <label className="text-sm font-bold text-tosca-700 ml-1">Musyrif/ah</label>
                 <select className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-bold text-tosca-900">
                   <option>Ust. Mansyur</option>
                   <option>Usth. Siti Khadijah</option>
