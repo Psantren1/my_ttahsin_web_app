@@ -18,10 +18,28 @@ import {
 import { useSettings } from '@/lib/hooks/useSettings';
 import { VirtualMeeting } from '../../musyrif/virtual-class/page';
 
+function toGoogleDriveEmbed(url: string): string | null {
+  if (!url) return null;
+  const patterns = [
+    /\/file\/d\/([^/?#&]+)/,
+    /\/open\?id=([^&]+)/,
+    /id=([^&]+)/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m && m[1]) {
+      return `https://drive.google.com/file/d/${m[1]}/preview`;
+    }
+  }
+  return null;
+}
+
 export default function VirtualClassSantriPage() {
   const { settings } = useSettings();
   const [meetings, setMeetings] = useState<VirtualMeeting[]>([]);
   const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
+  const [viewingDriveUrl, setViewingDriveUrl] = useState<string | null>(null);
+  const [viewingDriveTitle, setViewingDriveTitle] = useState('');
 
   useEffect(() => {
     const loadMeetings = async () => {
@@ -98,6 +116,30 @@ export default function VirtualClassSantriPage() {
             </p>
           </div>
         </div>
+
+        {/* Google Drive Embedded Viewer */}
+        {viewingDriveUrl && (
+          <div className="fixed inset-0 z-50 bg-white flex flex-col">
+            <div className="flex items-center gap-3 p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
+              <button
+                onClick={() => { setViewingDriveUrl(null); setViewingDriveTitle(''); }}
+                className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div>
+                <span className="text-sm font-black text-tosca-900 block">Materi — {viewingDriveTitle}</span>
+                <span className="text-[10px] text-tosca-500 font-medium">Google Drive • Dokumen Pendukung</span>
+              </div>
+            </div>
+            <iframe
+              src={viewingDriveUrl}
+              className="flex-1 w-full"
+              allow="autoplay"
+              allowFullScreen
+            />
+          </div>
+        )}
 
         {/* Meeting list */}
         <div className="space-y-4">
@@ -224,13 +266,20 @@ export default function VirtualClassSantriPage() {
                         )}
 
                         {/* 3. Google Drive Section */}
-                        {meeting.googleDriveLink && (
+                        {meeting.googleDriveLink && !viewingDriveUrl && (
                           <div className="space-y-2">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Bahan & Dokumen Pendukung</span>
-                            <a 
-                              href={meeting.googleDriveLink} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const embed = toGoogleDriveEmbed(meeting.googleDriveLink);
+                                if (embed) {
+                                  setViewingDriveUrl(embed);
+                                  setViewingDriveTitle(meeting.namaPertemuan);
+                                } else {
+                                  window.open(meeting.googleDriveLink, '_blank', 'noopener,noreferrer');
+                                }
+                              }}
                               className="w-full flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-2xl border border-blue-100 font-extrabold text-sm transition-all cursor-pointer shadow-sm"
                             >
                               <span className="flex items-center gap-2">
@@ -238,7 +287,7 @@ export default function VirtualClassSantriPage() {
                                 Akses Berkas Materi (Google Drive)
                               </span>
                               <ExternalLink size={16} />
-                            </a>
+                            </button>
                           </div>
                         )}
 
