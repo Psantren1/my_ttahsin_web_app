@@ -22,13 +22,13 @@ export default function StatusPage() {
             const map: any = {};
             
             hafalanRecords.forEach((r: any) => {
-              const santriId = r.santri_id || r.santriId;
+              const santriId = r.santuario_id;
               if (santriId && !map[santriId]) {
                 const santri = santriData.data.find((s: any) => s.id === santriId);
                 map[santriId] = {
                   id: santriId,
-                  nama: santri?.nama_lengkap || r.santriName || 'Santri',
-                  status: r.status === 'Lanjut' ? 'Lanjut' : 'Ulangi'
+                  nama: santri?.full_name || r.santri_name || 'Santri',
+                  status: r.status === 'LANJUT' ? 'Lanjut' : 'Ulangi'
                 };
               }
             });

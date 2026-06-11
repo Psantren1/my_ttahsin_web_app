@@ -43,7 +43,15 @@ export default function EvaluasiSantriPage() {
     try {
       const res = await fetch(`/api/evaluasi?santuario_id=${user.id}`);
       const data = await res.json();
-      const allRecords: EvaluasiRecord[] = data.data || [];
+      const allRecords: EvaluasiRecord[] = (data.data || []).map((r: any) => ({
+        id: r.id,
+        santriId: r.santuario_id,
+        santriName: r.santri_name || '',
+        kelasNama: r.kelas_nama || '',
+        adab: r.predikat_adab || '',
+        keterangan: r.catatan || '',
+        updatedAt: r.created_at || '',
+      }));
       const matched = allRecords.find(r => 
         r.santriId === user.id || 
         r.santriName.toLowerCase() === user.fullName.toLowerCase()

@@ -31,7 +31,15 @@ export default function TargetSantriPage() {
     try {
       const res = await fetch(`/api/target?santuario_id=${user.id}`);
       const data = await res.json();
-      const allRecords: TargetRecord[] = data.data || [];
+      const allRecords: TargetRecord[] = (data.data || []).map((r: any) => ({
+        id: r.id,
+        santriId: r.santuario_id,
+        santriName: r.santri_name || '',
+        kelasNama: r.kelas_nama || '',
+        juzTarget: r.juz || '',
+        progres: r.progres || 0,
+        updatedAt: r.created_at || '',
+      }));
       const matched = allRecords.find(r => 
         r.santriId === user.id || 
         r.santriName.toLowerCase() === user.fullName.toLowerCase()

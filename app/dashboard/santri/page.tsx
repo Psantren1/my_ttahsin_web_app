@@ -45,7 +45,11 @@ export default function SantriDashboard() {
         // Load Target
         const targetRes = await fetch(`/api/target?santuario_id=${user.id}`);
         const targetData = await targetRes.json();
-        const allTargets = targetData.data || [];
+        const allTargets = (targetData.data || []).map((r: any) => ({
+          santriId: r.santuario_id,
+          santriName: r.santri_name || '',
+          juzTarget: r.juz || '',
+        }));
         const match = allTargets.find((r: any) => 
           r.santriId === user.id || 
           r.santriName.toLowerCase() === user.fullName.toLowerCase()
@@ -57,7 +61,12 @@ export default function SantriDashboard() {
         // Load Nilai Rata-rata
         const hafalanRes = await fetch(`/api/setoran?santuario_id=${user.id}`);
         const hafalanData = await hafalanRes.json();
-        const allHafalan = hafalanData.data || [];
+        const allHafalan = (hafalanData.data || []).map((r: any) => ({
+          santriId: r.santuario_id,
+          nis: r.nis || '',
+          santriName: r.santri_name || '',
+          rata: r.rata_rata || 0,
+        }));
         const myHafalan = allHafalan.filter((r: any) => 
           r.santriId === user.id || 
           r.nis === user.nis || 
@@ -71,7 +80,11 @@ export default function SantriDashboard() {
         // Load Evaluasi Adab
         const evalRes = await fetch(`/api/evaluasi?santuario_id=${user.id}`);
         const evalData = await evalRes.json();
-        const allEval = evalData.data || [];
+        const allEval = (evalData.data || []).map((r: any) => ({
+          santriId: r.santuario_id,
+          santriName: r.santri_name || '',
+          adab: r.predikat_adab || '',
+        }));
         const evalMatch = allEval.find((r: any) => 
           r.santriId === user.id || 
           r.santriName.toLowerCase() === user.fullName.toLowerCase()

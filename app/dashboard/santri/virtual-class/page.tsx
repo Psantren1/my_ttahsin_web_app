@@ -28,7 +28,20 @@ export default function VirtualClassSantriPage() {
       try {
         const res = await fetch('/api/zoom-meetings');
         const data = await res.json();
-        setMeetings(data.data || []);
+        setMeetings((data.data || []).map((m: any) => {
+          let parsedDesc = { googleDriveLink: '', youtubeLink: '' };
+          if (m.description) {
+            try { parsedDesc = JSON.parse(m.description); } catch (e) { /* ignore */ }
+          }
+          return {
+            id: m.id,
+            namaPertemuan: m.topic || '',
+            googleDriveLink: parsedDesc.googleDriveLink || '',
+            youtubeLink: parsedDesc.youtubeLink || '',
+            zoomLink: m.link || '',
+            createdAt: m.meeting_date ? new Date(m.meeting_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+          };
+        }));
       } catch (e) {
         console.error('Error fetching meetings', e);
       }

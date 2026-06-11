@@ -24,7 +24,7 @@ export default function NilaiPage() {
               const latest = myRecs[0] || { tajwid_score: 0, makhraj_score: 0, kelancaran_score: 0 };
               return {
                 id: s.id,
-                nama: s.nama_lengkap,
+                nama: s.full_name || '',
                 tajwid: latest.tajwid_score ?? 0,
                 makhraj: latest.makhraj_score ?? 0,
                 kelancaran: latest.kelancaran_score ?? 0

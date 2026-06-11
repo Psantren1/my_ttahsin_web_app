@@ -87,7 +87,15 @@ export default function PresensiPage() {
           ]);
       if (santriRes.ok) {
         const santriData = await santriRes.json();
-        setSantriList(santriData.data || []);
+        setSantriList((santriData.data || []).map((s: any) => ({
+          id: s.id,
+          nis: s.nis || '',
+          nisn: s.nisn || '',
+          nama_lengkap: s.full_name || '',
+          kelas_id: s.kelas_id || '',
+          kelas_nama: s.kelas_nama || '',
+          is_active: s.is_active,
+        })));
       }
       if (absensiRes.ok) {
         const absensiData = await absensiRes.json();
