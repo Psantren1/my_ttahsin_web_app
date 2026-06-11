@@ -34,6 +34,10 @@ export async function getUserByEmail(email: string): Promise<UserRow | null> {
   return queryOne<UserRow>('SELECT * FROM users WHERE email = $1', [email]);
 }
 
+export async function getUserByUsername(username: string): Promise<UserRow | null> {
+  return queryOne<UserRow>('SELECT * FROM users WHERE username = $1', [username]);
+}
+
 export async function getUserById(id: string): Promise<UserRow | null> {
   return queryOne<UserRow>('SELECT * FROM users WHERE id = $1', [id]);
 }

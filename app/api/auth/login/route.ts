@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserByEmail, hashPassword } from '@/lib/services/user.service';
+import { getUserByEmail, getUserByUsername, hashPassword } from '@/lib/services/user.service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,16 +7,20 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email dan password wajib diisi' },
+        { error: 'Email/username dan password wajib diisi' },
         { status: 400 }
       );
     }
 
-    const user = await getUserByEmail(email);
+    // Cari user berdasarkan email atau username
+    let user = await getUserByEmail(email);
+    if (!user) {
+      user = await getUserByUsername(email);
+    }
 
     if (!user || user.password_hash !== hashPassword(password)) {
       return NextResponse.json(
-        { error: 'Email atau password salah' },
+        { error: 'Email/username atau password salah' },
         { status: 401 }
       );
     }
