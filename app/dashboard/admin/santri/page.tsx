@@ -97,7 +97,25 @@ export default function ManajemenSantri() {
       ]);
       const santriJson = await santriRes.json();
       const kelasJson = await kelasRes.json();
-      if (santriJson.data) setSantriList(santriJson.data);
+      if (santriJson.data) {
+        setSantriList((santriJson.data || []).map((s: any) => ({
+          id: s.id,
+          nis: s.nis || '',
+          nisn: s.nisn || '',
+          nama_lengkap: s.full_name || '',
+          username: s.username || '',
+          email: s.email || '',
+          no_wa: s.no_wa || '',
+          kelas_id: s.kelas_id || '',
+          kelas_nama: s.kelas_nama || '',
+          is_active: s.is_active,
+          target_hafalan: s.target_hafalan ?? 30,
+          nama_ayah: s.nama_ayah || '',
+          nama_ibu: s.nama_ibu || '',
+          pekerjaan_ayah: s.pekerjaan_ayah || '',
+          pekerjaan_ibu: s.pekerjaan_ibu || '',
+        })));
+      }
       if (kelasJson.data) setKelasOptions(kelasJson.data);
     } catch (err) {
       console.error('Failed to load data', err);

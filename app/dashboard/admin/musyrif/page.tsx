@@ -82,7 +82,21 @@ export default function ManajemenMusyrif() {
     try {
       const res = await fetch('/api/musyrif');
       const json = await res.json();
-      if (json.data) setMusyrifList(json.data);
+      if (json.data) {
+        setMusyrifList((json.data || []).map((m: any) => ({
+          id: m.id,
+          nip: m.nip || '',
+          nama_lengkap: m.full_name || '',
+          kelas_id: m.kelas_id || '',
+          kelas_nama: m.kelas_nama || '',
+          email: m.email || '',
+          no_wa: m.no_wa || '',
+          username: m.username || '',
+          password: '',
+          is_active: m.is_active,
+          created_at: m.created_at || '',
+        })));
+      }
     } catch (err) {
       console.error('Failed to load musyrif', err);
     }
