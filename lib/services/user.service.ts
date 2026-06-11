@@ -17,6 +17,13 @@ export interface UserRow {
   target_hafalan: number;
   created_at: string;
   updated_at: string;
+  username: string | null;
+  no_wa: string | null;
+  nisn: string | null;
+  nama_ayah: string | null;
+  nama_ibu: string | null;
+  pekerjaan_ayah: string | null;
+  pekerjaan_ibu: string | null;
 }
 
 export function hashPassword(password: string): string {
@@ -40,17 +47,28 @@ export async function createUser(data: {
   nip?: string | null;
   kelas_id?: string | null;
   target_hafalan?: number;
+  username?: string | null;
+  no_wa?: string | null;
+  nisn?: string | null;
+  nama_ayah?: string | null;
+  nama_ibu?: string | null;
+  pekerjaan_ayah?: string | null;
+  pekerjaan_ibu?: string | null;
 }): Promise<UserRow> {
   const password_hash = hashPassword(data.password);
   const sql = `
-    INSERT INTO users (email, password_hash, full_name, role, nis, nip, kelas_id, target_hafalan)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO users (email, password_hash, full_name, role, nis, nip, kelas_id, target_hafalan, username, no_wa, nisn, nama_ayah, nama_ibu, pekerjaan_ayah, pekerjaan_ibu)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     RETURNING *
   `;
   return queryOne<UserRow>(sql, [
     data.email, password_hash, data.full_name, data.role,
     data.nis ?? null, data.nip ?? null,
-    data.kelas_id ?? null, data.target_hafalan ?? 30
+    data.kelas_id ?? null, data.target_hafalan ?? 30,
+    data.username ?? null, data.no_wa ?? null,
+    data.nisn ?? null, data.nama_ayah ?? null,
+    data.nama_ibu ?? null, data.pekerjaan_ayah ?? null,
+    data.pekerjaan_ibu ?? null
   ]) as Promise<UserRow>;
 }
 
@@ -85,6 +103,13 @@ export async function updateUser(id: string, data: {
   is_active?: boolean;
   target_hafalan?: number;
   password?: string;
+  username?: string | null;
+  no_wa?: string | null;
+  nisn?: string | null;
+  nama_ayah?: string | null;
+  nama_ibu?: string | null;
+  pekerjaan_ayah?: string | null;
+  pekerjaan_ibu?: string | null;
 }): Promise<UserRow | null> {
   const fields: string[] = [];
   const values: unknown[] = [];

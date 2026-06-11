@@ -181,6 +181,8 @@ export default function ManajemenMusyrif() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             full_name: formData.nama_lengkap,
+            no_wa: formData.no_wa,
+            username: formData.username,
             ...(formData.email ? { email: formData.email } : {}),
             ...(formData.password ? { password: formData.password } : {}),
           }),
@@ -196,6 +198,8 @@ export default function ManajemenMusyrif() {
             password: formData.password,
             full_name: formData.nama_lengkap,
             nip: formData.nip,
+            username: formData.username,
+            no_wa: formData.no_wa,
           }),
         });
         if (!res.ok) throw new Error('Failed to create');

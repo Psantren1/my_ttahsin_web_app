@@ -49,15 +49,6 @@ interface HafalanRecord {
 // Initial dummy records for beautiful first impression
 const defaultHafalanRecords: HafalanRecord[] = [];
 
-const kelasList = [
-  { id: 'kelas-7a', nama: '7A - Tahfizh Dasar' },
-  { id: 'kelas-7b', nama: '7B - Tahfizh Dasar' },
-  { id: 'kelas-8a', nama: '8A - Tahfizh Menengah' },
-  { id: 'kelas-8b', nama: '8B - Tahfizh Menengah' },
-  { id: 'kelas-9a', nama: '9A - Tahfizh Lanjutan' },
-  { id: 'kelas-9b', nama: '9B - Tahfizh Lanjutan' },
-];
-
 export default function ManajemenHafalanAdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { settings } = useSettings();
@@ -65,16 +56,18 @@ export default function ManajemenHafalanAdminPage() {
   // Data lists
   const [santriList, setSantriList] = useState<Santri[]>([]);
   const [records, setRecords] = useState<HafalanRecord[]>([]);
+  const [kelasOptions, setKelasOptions] = useState<any[]>([]);
   
   // Filters
-  const [selectedKelasId, setSelectedKelasId] = useState<string>('kelas-7a');
+  const [selectedKelasId, setSelectedKelasId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   const loadData = async () => {
     try {
-      const [santriRes, setoranRes] = await Promise.all([
+      const [santriRes, setoranRes, kelasRes] = await Promise.all([
         fetch('/api/santri'),
         fetch('/api/setoran'),
+        fetch('/api/kelas'),
       ]);
       const santriJson = await santriRes.json();
       if (santriJson.data) setSantriList(santriJson.data);
@@ -97,6 +90,13 @@ export default function ManajemenHafalanAdminPage() {
           createdAt: r.created_at || ''
         }));
         setRecords(mapped);
+      }
+      const kelasJson = await kelasRes.json();
+      if (kelasJson.data) {
+        setKelasOptions(kelasJson.data);
+        if (kelasJson.data.length > 0 && !selectedKelasId) {
+          setSelectedKelasId(kelasJson.data[0].id);
+        }
       }
     } catch (e) {
       console.error('Error loading data', e);
@@ -213,7 +213,8 @@ export default function ManajemenHafalanAdminPage() {
                 onChange={(e) => setSelectedKelasId(e.target.value)}
                 className="w-full sm:w-64 px-4 py-2.5 bg-tosca-50/50 border border-tosca-100 rounded-xl text-sm font-bold text-tosca-900 focus:ring-2 focus:ring-tosca-500"
               >
-                {kelasList.map(k => (
+                {kelasOptions.length === 0 && <option value="">-- Memuat kelas --</option>}
+                {kelasOptions.map((k: any) => (
                   <option key={k.id} value={k.id}>{k.nama}</option>
                 ))}
               </select>

@@ -16,6 +16,11 @@ CREATE TABLE informasi untuk fitur Admin → Musyrif/Santri announcements:
 - `id`, `judul`, `isi`, `target_role` (MUSYRIF/SANTRI/ALL)
 - `created_by`, `is_active`, `created_at`, `updated_at`
 
+## 004_users_add_columns.sql — ⏳ BELUM DIAPPLY
+ALTER TABLE users ADD COLUMNS untuk field yang hilang:
+- `username`, `no_wa`, `nisn`
+- `nama_ayah`, `nama_ibu`, `pekerjaan_ayah`, `pekerjaan_ibu`
+
 ## Cara Apply
 
 ### Opsi 1: Manual di Neon SQL Editor

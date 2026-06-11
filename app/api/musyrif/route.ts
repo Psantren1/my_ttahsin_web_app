@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
       full_name: body.full_name,
       role: 'MUSYRIF',
       nip: body.nip,
+      username: body.username,
+      no_wa: body.no_wa,
     });
     return NextResponse.json({ data: user });
   } catch (error) {

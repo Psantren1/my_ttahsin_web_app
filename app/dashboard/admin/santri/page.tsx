@@ -208,6 +208,13 @@ export default function ManajemenSantri() {
             full_name: formData.nama_lengkap,
             nis: formData.nis,
             kelas_id: formData.kelas_id,
+            no_wa: formData.no_wa,
+            username: formData.username,
+            nisn: formData.nisn,
+            nama_ayah: formData.nama_ayah,
+            nama_ibu: formData.nama_ibu,
+            pekerjaan_ayah: formData.pekerjaan_ayah,
+            pekerjaan_ibu: formData.pekerjaan_ibu,
             ...(formData.password ? { password: formData.password } : {}),
           }),
         });
@@ -223,6 +230,13 @@ export default function ManajemenSantri() {
             full_name: formData.nama_lengkap,
             nis: formData.nis,
             kelas_id: formData.kelas_id,
+            username: formData.username,
+            no_wa: formData.no_wa,
+            nisn: formData.nisn,
+            nama_ayah: formData.nama_ayah,
+            nama_ibu: formData.nama_ibu,
+            pekerjaan_ayah: formData.pekerjaan_ayah,
+            pekerjaan_ibu: formData.pekerjaan_ibu,
           }),
         });
         if (!res.ok) throw new Error('Failed to create');

@@ -24,6 +24,13 @@ export async function POST(request: NextRequest) {
       nis: body.nis,
       kelas_id: body.kelas_id,
       target_hafalan: body.target_hafalan ?? 30,
+      username: body.username,
+      no_wa: body.no_wa,
+      nisn: body.nisn,
+      nama_ayah: body.nama_ayah,
+      nama_ibu: body.nama_ibu,
+      pekerjaan_ayah: body.pekerjaan_ayah,
+      pekerjaan_ibu: body.pekerjaan_ibu,
     });
     return NextResponse.json({ data: user });
   } catch (error) {
