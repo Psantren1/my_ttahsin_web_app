@@ -3,7 +3,7 @@ import { Jadwal } from '@/types/jadwal';
 
 export async function getAllJadwal(): Promise<Jadwal[]> {
   const sql = `
-    SELECT j.*, u.full_name as musyrif_name, k.nama as kelas_nama
+    SELECT j.*, u.full_name as musyrif_name, k.nama as kelas_nama, k.level as kelas_level
     FROM jadwal j
     LEFT JOIN users u ON j.musyrif_id = u.id
     LEFT JOIN kelas k ON j.kelas_id = k.id
@@ -14,7 +14,7 @@ export async function getAllJadwal(): Promise<Jadwal[]> {
 
 export async function getJadwalByHari(hari: Jadwal['hari']): Promise<Jadwal[]> {
   const sql = `
-    SELECT j.*, u.full_name as musyrif_name, k.nama as kelas_nama
+    SELECT j.*, u.full_name as musyrif_name, k.nama as kelas_nama, k.level as kelas_level
     FROM jadwal j
     LEFT JOIN users u ON j.musyrif_id = u.id
     LEFT JOIN kelas k ON j.kelas_id = k.id
@@ -26,7 +26,7 @@ export async function getJadwalByHari(hari: Jadwal['hari']): Promise<Jadwal[]> {
 
 export async function getJadwalByKelas(kelasId: string): Promise<Jadwal[]> {
   const sql = `
-    SELECT j.*, u.full_name as musyrif_name, k.nama as kelas_nama
+    SELECT j.*, u.full_name as musyrif_name, k.nama as kelas_nama, k.level as kelas_level
     FROM jadwal j
     LEFT JOIN users u ON j.musyrif_id = u.id
     LEFT JOIN kelas k ON j.kelas_id = k.id
@@ -38,7 +38,7 @@ export async function getJadwalByKelas(kelasId: string): Promise<Jadwal[]> {
 
 export async function getJadwalByMusyrif(musyrifId: string): Promise<Jadwal[]> {
   const sql = `
-    SELECT j.*, u.full_name as musyrif_name, k.nama as kelas_nama
+    SELECT j.*, u.full_name as musyrif_name, k.nama as kelas_nama, k.level as kelas_level
     FROM jadwal j
     LEFT JOIN users u ON j.musyrif_id = u.id
     LEFT JOIN kelas k ON j.kelas_id = k.id

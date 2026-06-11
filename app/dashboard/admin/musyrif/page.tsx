@@ -233,9 +233,9 @@ export default function ManajemenMusyrif() {
 
   // Filter
   const filteredMusyrif = musyrifList.filter(m =>
-    m.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.nip.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.username.toLowerCase().includes(searchTerm.toLowerCase())
+    (m.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (m.nip || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (m.username || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Download template
@@ -384,17 +384,17 @@ export default function ManajemenMusyrif() {
                             {m.email}
                           </a>
                           <a
-                            href={`https://wa.me/${m.no_wa.replace(/^0/, '62')}`}
+                            href={`https://wa.me/${(m.no_wa || '').replace(/^0/, '62')}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1.5 text-xs text-tosca-600 hover:text-tosca-900 transition-colors"
                           >
                             <Phone size={12} />
-                            {m.no_wa}
+                            {m.no_wa || '-'}
                             <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                           </a>
                         </td>
-                        <td className="px-4 py-3 text-sm font-mono text-tosca-700 bg-tosca-50/50 rounded">{m.username}</td>
+                        <td className="px-4 py-3 text-sm font-mono text-tosca-700 bg-tosca-50/50 rounded">{m.username || '-'}</td>
                         <td className="px-4 py-3 text-center">
                           <span className="px-2.5 py-1 bg-gray-100 text-gray-500 rounded text-[10px] font-bold">
                             ********

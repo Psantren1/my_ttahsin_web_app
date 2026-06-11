@@ -57,20 +57,24 @@ export async function createUser(data: {
 }): Promise<UserRow> {
   const password_hash = hashPassword(data.password);
   const sql = `
-    INSERT INTO users (email, password_hash, full_name, role, nis, nip, kelas_id, target_hafalan)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO users (email, password_hash, full_name, role, nis, nip, kelas_id, target_hafalan, username, no_wa, nisn, nama_ayah, nama_ibu, pekerjaan_ayah, pekerjaan_ibu)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     RETURNING *
   `;
   return queryOne<UserRow>(sql, [
     data.email, password_hash, data.full_name, data.role,
     data.nis ?? null, data.nip ?? null,
-    data.kelas_id ?? null, data.target_hafalan ?? 30
+    data.kelas_id ?? null, data.target_hafalan ?? 30,
+    data.username ?? null, data.no_wa ?? null,
+    data.nisn ?? null, data.nama_ayah ?? null,
+    data.nama_ibu ?? null, data.pekerjaan_ayah ?? null,
+    data.pekerjaan_ibu ?? null
   ]) as Promise<UserRow>;
 }
 
 export async function getAllUsersByRole(role: string): Promise<UserRow[]> {
   const sql = `
-    SELECT u.*, k.nama as kelas_nama
+    SELECT u.*, k.nama as kelas_nama, k.level as kelas_level
     FROM users u
     LEFT JOIN kelas k ON u.kelas_id = k.id
     WHERE u.role = $1 AND u.is_active = true
@@ -81,7 +85,7 @@ export async function getAllUsersByRole(role: string): Promise<UserRow[]> {
 
 export async function getUsersByKelas(kelasId: string): Promise<UserRow[]> {
   const sql = `
-    SELECT u.*, k.nama as kelas_nama
+    SELECT u.*, k.nama as kelas_nama, k.level as kelas_level
     FROM users u
     LEFT JOIN kelas k ON u.kelas_id = k.id
     WHERE u.kelas_id = $1 AND u.role = 'SANTRI' AND u.is_active = true
