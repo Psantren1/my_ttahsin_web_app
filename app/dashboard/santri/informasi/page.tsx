@@ -2,6 +2,8 @@ import React from 'react';
 import { Megaphone, Clock } from 'lucide-react';
 import { getAllInformasi } from '@/lib/services/informasi.service';
 
+export const dynamic = 'force-dynamic';
+
 export default async function InformasiSantriPage() {
   const infoList = await getAllInformasi('SANTRI');
 
