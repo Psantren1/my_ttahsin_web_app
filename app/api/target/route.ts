@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db/client';
 
-export interface TargetHafalan {
+export interface TargetTahsin {
   id: string;
   santuario_id: string;
   surah: string;
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     let sql = `
       SELECT t.*, u.full_name as santri_name, u.nis, k.nama as kelas_nama
-      FROM target_hafalan t
+      FROM target_Tahsin t
       JOIN users u ON t.santuario_id = u.id
       LEFT JOIN kelas k ON u.kelas_id = k.id
     `;
@@ -56,11 +56,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const sql = `
-      INSERT INTO target_hafalan (santuario_id, surah, ayat_start, ayat_end, juz, progres, target_date, status, catatan)
+      INSERT INTO target_Tahsin (santuario_id, surah, ayat_start, ayat_end, juz, progres, target_date, status, catatan)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
-    const data = await queryOne<TargetHafalan>(sql, [
+    const data = await queryOne<TargetTahsin>(sql, [
       body.santuario_id, body.surah, body.ayat_start ?? null, body.ayat_end ?? null,
       body.juz ?? null, body.progres ?? 0, body.target_date, body.status ?? 'BELUM', body.catatan ?? null
     ]);

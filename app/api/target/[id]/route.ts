@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db/client';
-import { TargetHafalan } from '../route';
+import { TargetTahsin } from '../route';
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -21,8 +21,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     values.push(params.id);
-    const sql = `UPDATE target_hafalan SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex} RETURNING *`;
-    const data = await queryOne<TargetHafalan>(sql, values);
+    const sql = `UPDATE target_Tahsin SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex} RETURNING *`;
+    const data = await queryOne<TargetTahsin>(sql, values);
     if (!data) {
       return NextResponse.json({ error: 'Target tidak ditemukan' }, { status: 404 });
     }
@@ -34,7 +34,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const result = await query<{ id: string }>('DELETE FROM target_hafalan WHERE id = $1 RETURNING id', [params.id]);
+    const result = await query<{ id: string }>('DELETE FROM target_Tahsin WHERE id = $1 RETURNING id', [params.id]);
     if (result.length === 0) {
       return NextResponse.json({ error: 'Target tidak ditemukan' }, { status: 404 });
     }

@@ -1,10 +1,10 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from 'react';
-import Sidebar from '@/components/ui/sidebar';
-import Navbar from '@/components/ui/navbar';
+import React, { useState } from 'react';
+
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useInformasiList, useCreateInformasi } from '@/lib/hooks/useApi';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Megaphone, Plus, Search, Filter, X, CheckCircle2,
   AlertCircle, Edit3, Trash2, Send, Clock, Users, UserCheck
@@ -23,9 +23,9 @@ interface InformasiRecord {
 }
 
 const ROLE_LABEL: Record<string, string> = {
-  MUSYRIF: 'Musyrif/ah',
-  SANTRI: 'Santri',
-  ALL: 'Semua (Musyrif & Santri)',
+  MUSYRIF: 'Guru',
+  SANTRI: 'Siswa',
+  ALL: 'Semua (Guru & Siswa)',
 };
 
 const ROLE_COLOR: Record<string, string> = {
@@ -36,8 +36,6 @@ const ROLE_COLOR: Record<string, string> = {
 
 export default function ManajemenInformasi() {
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [informasiList, setInformasiList] = useState<InformasiRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InformasiRecord | null>(null);
@@ -47,25 +45,16 @@ export default function ManajemenInformasi() {
   const [notif, setNotif] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState('');
 
+  const qc = useQueryClient();
+  const createInformasi = useCreateInformasi();
+
+  const { data: informasiData } = useInformasiList(filterRole || undefined);
+  const informasiList: InformasiRecord[] = informasiData?.data || [];
+
   const showNotif = (msg: string) => {
     setNotif(msg);
     setTimeout(() => setNotif(null), 3500);
   };
-
-  const loadData = async () => {
-    try {
-      const params = filterRole ? `?target_role=${filterRole}` : '';
-      const res = await fetch(`/api/informasi${params}`);
-      const data = await res.json();
-      if (data.data) setInformasiList(data.data);
-    } catch (e) {
-      console.error('Gagal fetch informasi:', e);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [filterRole]);
 
   const openCreate = () => {
     setEditingItem(null);
@@ -104,22 +93,17 @@ export default function ManajemenInformasi() {
         });
         if (!res.ok) throw new Error('Gagal update');
         showNotif('Informasi berhasil diperbarui.');
+        qc.invalidateQueries({ queryKey: ['informasi'] } as any);
       } else {
-        const res = await fetch('/api/informasi', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            judul: formJudul.trim(),
-            isi: formIsi.trim(),
-            target_role: formTargetRole,
-            created_by: user.id,
-          }),
+        await createInformasi.mutateAsync({
+          judul: formJudul.trim(),
+          isi: formIsi.trim(),
+          target_role: formTargetRole,
+          created_by: user.id,
         });
-        if (!res.ok) throw new Error('Gagal simpan');
         showNotif('Informasi berhasil dikirim.');
       }
       setIsModalOpen(false);
-      await loadData();
     } catch (e) {
       showNotif('Gagal menyimpan informasi.');
       console.error(e);
@@ -132,7 +116,7 @@ export default function ManajemenInformasi() {
       const res = await fetch(`/api/informasi/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal hapus');
       showNotif('Informasi berhasil dihapus.');
-      await loadData();
+      qc.invalidateQueries({ queryKey: ['informasi'] } as any);
     } catch (e) {
       showNotif('Gagal menghapus informasi.');
       console.error(e);
@@ -145,31 +129,26 @@ export default function ManajemenInformasi() {
   );
 
   return (
-    <div className="min-h-screen bg-tosca-50/30">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
-      <div className="lg:pl-72 transition-all duration-300">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
-
+    <>
         <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
 
           {/* Toast */}
           {notif && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 bg-slate-900/95 backdrop-blur text-white px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4 max-w-sm">
-              <CheckCircle2 className="text-teal-400 shrink-0" size={18} />
-              <span className="text-xs font-extrabold">{notif}</span>
+              <CheckCircle2 className="text-surface-400 shrink-0" size={18} />
+              <span className="text-xs font-bold">{notif}</span>
             </div>
           )}
 
           {/* Header */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-tosca-50 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-surface-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-tosca-900 flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900 flex items-center gap-3">
                 <Megaphone className="text-amber-500" size={32} />
                 Informasi & Pengumuman
               </h1>
               <p className="text-tosca-600 font-medium text-sm">
-                Kirim informasi dan pengumuman ke akun Musyrif/ah dan Santri.
+                Kirim informasi dan pengumuman ke akun Guru dan Siswa.
               </p>
             </div>
             <button
@@ -182,8 +161,8 @@ export default function ManajemenInformasi() {
           </div>
 
           {/* Filter & Search */}
-          <div className="bg-white rounded-3xl border border-tosca-50 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-tosca-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="bg-white rounded-3xl border border-surface-100 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-surface-100 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <select
@@ -192,21 +171,21 @@ export default function ManajemenInformasi() {
                     className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-tosca-500 cursor-pointer"
                   >
                     <option value="">Semua Target</option>
-                    <option value="MUSYRIF">Musyrif/ah</option>
-                    <option value="SANTRI">Santri</option>
+                    <option value="MUSYRIF">Guru</option>
+                    <option value="SANTRI">Siswa</option>
                     <option value="ALL">Semua</option>
                   </select>
                   <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                 </div>
               </div>
               <div className="relative w-full sm:max-w-xs">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tosca-400" size={16} />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400" size={16} />
                 <input
                   type="text"
                   placeholder="Cari judul atau isi..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-tosca-200 rounded-2xl text-xs font-bold text-black placeholder:text-tosca-400 focus:ring-2 focus:ring-tosca-500 focus:outline-none shadow-sm"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-tosca-200 rounded-2xl text-xs font-bold text-black placeholder:text-surface-400 focus:ring-2 focus:ring-tosca-500 focus:outline-none shadow-sm"
                 />
               </div>
             </div>
@@ -223,8 +202,8 @@ export default function ManajemenInformasi() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1.5">
-                        <h3 className="text-sm font-black text-slate-900 truncate">{item.judul}</h3>
-                        <span className={`px-2.5 py-0.5 rounded-full border text-[9px] font-black uppercase ${ROLE_COLOR[item.target_role] || 'bg-slate-50 text-slate-500'}`}>
+                        <h3 className="text-sm font-bold text-slate-900 truncate">{item.judul}</h3>
+                        <span className={`px-2.5 py-0.5 rounded-full border text-[9px] font-bold uppercase ${ROLE_COLOR[item.target_role] || 'bg-slate-50 text-slate-500'}`}>
                           {ROLE_LABEL[item.target_role] || item.target_role}
                         </span>
                       </div>
@@ -260,13 +239,10 @@ export default function ManajemenInformasi() {
             </div>
           </div>
         </main>
-      </div>
-
-      {/* Modal Create / Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-tosca-50 flex items-center justify-between bg-tosca-50/20">
+            <div className="p-6 border-b border-surface-100 flex items-center justify-between bg-tosca-50/20">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-tosca-100 text-tosca-700 flex items-center justify-center">
                   {editingItem ? <Edit3 size={20} /> : <Megaphone size={20} />}
@@ -275,12 +251,12 @@ export default function ManajemenInformasi() {
                   <h2 className="text-lg font-bold text-tosca-900">
                     {editingItem ? 'Edit Informasi' : 'Informasi Baru'}
                   </h2>
-                  <p className="text-xs text-tosca-500 font-semibold">
-                    {editingItem ? 'Perbarui informasi yang sudah dikirim.' : 'Buat informasi untuk Musyrif/ah dan/atau Santri.'}
-                  </p>
+                    <p className="text-xs text-tosca-500 font-semibold">
+                      {editingItem ? 'Perbarui informasi yang sudah dikirim.' : 'Buat informasi untuk Guru dan/atau Siswa.'}
+                    </p>
                 </div>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-tosca-400 hover:text-tosca-600">
+              <button onClick={() => setIsModalOpen(false)} className="text-surface-400 hover:text-tosca-600">
                 <X size={22} />
               </button>
             </div>
@@ -314,9 +290,9 @@ export default function ManajemenInformasi() {
                   onChange={e => setFormTargetRole(e.target.value as 'MUSYRIF' | 'SANTRI' | 'ALL')}
                   className="w-full px-4 py-3 rounded-xl border border-tosca-100 text-sm text-[#0B7D72] font-bold focus:outline-none focus:ring-2 focus:ring-tosca-500"
                 >
-                  <option value="ALL">Semua (Musyrif/ah & Santri)</option>
-                  <option value="MUSYRIF">Musyrif/ah</option>
-                  <option value="SANTRI">Santri</option>
+                  <option value="ALL">Semua (Guru & Siswa)</option>
+                  <option value="MUSYRIF">Guru</option>
+                  <option value="SANTRI">Siswa</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
@@ -338,6 +314,6 @@ export default function ManajemenInformasi() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -1,5 +1,4 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -16,20 +15,66 @@ interface SetoranRecord {
   santriName: string;
   kelasNama: string;
   nis: string;
-  surah: string;
-  ayat: string;
-  tajwid: number;
-  makhraj: number;
-  kelancaran: number;
+  detail1: string;
+  detail2: string;
+  score1: number;
+  score2: number;
+  score3: number;
   rata: number;
-  status: 'Lanjut' | 'Ulang';
-  jenis: string;
+  status: string;
   createdAt: string;
 }
 
-const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
-  Lanjut: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2, label: 'Lanjut' },
-  Ulang: { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: AlertCircle, label: 'Ulangi' },
+const LEVEL_API: Record<string, string> = {
+  TAHSIN: '/api/setoran', BTQ_PEMULA: '/api/btq-pemula', BTQ_LANJUTAN: '/api/btq-lanjutan',
+  TAHFIDZ: '/api/tahfidz', MUROJAAH: '/api/murojaah',
+};
+
+const LEVEL_MAP: Record<string, (r: any) => SetoranRecord> = {
+  TAHSIN: (r) => ({
+    id: r.id, santriId: r.santuario_id, santriName: r.santri_name || '',
+    kelasNama: r.kelas_nama || '', nis: r.nis || '',
+    detail1: r.surah || '', detail2: r.ayat_start ? (r.ayat_end ? `${r.ayat_start}-${r.ayat_end}` : String(r.ayat_start)) : '',
+    score1: r.tajwid_score || 0, score2: r.makhraj_score || 0, score3: r.kelancaran_score || 0,
+    rata: r.rata_rata || 0, status: r.status === 'LANJUT' ? 'Lanjut' : 'Ulang',
+    createdAt: r.created_at || '',
+  }),
+  BTQ_PEMULA: (r) => ({
+    id: r.id, santriId: r.santuario_id, santriName: r.santri_name || '',
+    kelasNama: r.kelas_nama || '', nis: r.nis || '',
+    detail1: r.jilid || '', detail2: String(r.halaman || ''),
+    score1: r.nilai || 0, score2: 0, score3: 0,
+    rata: r.nilai || 0, status: '', createdAt: r.created_at || '',
+  }),
+  BTQ_LANJUTAN: (r) => ({
+    id: r.id, santriId: r.santuario_id, santriName: r.santri_name || '',
+    kelasNama: r.kelas_nama || '', nis: r.nis || '',
+    detail1: r.juz_surah || '', detail2: r.level || '',
+    score1: r.nilai || 0, score2: 0, score3: 0,
+    rata: r.nilai || 0, status: '', createdAt: r.created_at || '',
+  }),
+  TAHFIDZ: (r) => ({
+    id: r.id, santriId: r.santuario_id, santriName: r.santri_name || '',
+    kelasNama: r.kelas_nama || '', nis: r.nis || '',
+    detail1: r.surah || '', detail2: r.ayat || '',
+    score1: r.nilai || 0, score2: 0, score3: 0,
+    rata: r.nilai || 0, status: '', createdAt: r.created_at || '',
+  }),
+  MUROJAAH: (r) => ({
+    id: r.id, santriId: r.santuario_id, santriName: r.santri_name || '',
+    kelasNama: r.kelas_nama || '', nis: r.nis || '',
+    detail1: r.surah || '', detail2: r.ayat || '',
+    score1: r.nilai || 0, score2: 0, score3: 0,
+    rata: r.nilai || 0, status: '', createdAt: r.created_at || '',
+  }),
+};
+
+const FIELD_LABELS: Record<string, { label1: string; label2: string; scoreLabel: string; scores: string[] }> = {
+  TAHSIN: { label1: 'Surah', label2: 'Ayat', scoreLabel: 'Nilai', scores: ['Tajwid', 'Makhraj', 'Kelancaran'] },
+  BTQ_PEMULA: { label1: 'Jilid', label2: 'Halaman', scoreLabel: 'Nilai', scores: ['Nilai'] },
+  BTQ_LANJUTAN: { label1: 'Juz/Surah', label2: 'Level', scoreLabel: 'Nilai', scores: ['Nilai'] },
+  TAHFIDZ: { label1: 'Surah', label2: 'Ayat', scoreLabel: 'Nilai', scores: ['Nilai'] },
+  MUROJAAH: { label1: 'Surah', label2: 'Ayat', scoreLabel: 'Nilai', scores: ['Nilai'] },
 };
 
 export default function SetoranSantriPage() {
@@ -38,29 +83,19 @@ export default function SetoranSantriPage() {
   const [records, setRecords] = useState<SetoranRecord[]>([]);
   const [stats, setStats] = useState({ total: 0, rataRata: 0 });
 
+  const level = user?.levelProgram || 'TAHSIN';
+  const apiPath = LEVEL_API[level] || LEVEL_API['TAHSIN'];
+  const mapper = LEVEL_MAP[level] || LEVEL_MAP['TAHSIN'];
+  const labels = FIELD_LABELS[level] || FIELD_LABELS['TAHSIN'];
+
   useEffect(() => {
     if (!user) return;
 
     const loadData = async () => {
       try {
-        const res = await fetch(`/api/setoran?santuario_id=${user.id}`);
+        const res = await fetch(`${apiPath}?santuario_id=${user.id}`);
         const data = await res.json();
-        const mapped = (data.data || []).map((r: any) => ({
-          id: r.id,
-          santriId: r.santuario_id,
-          santriName: r.santri_name || '',
-          kelasNama: r.kelas_nama || '',
-          nis: r.nis || '',
-          surah: r.surah || '',
-          ayat: r.ayat_start ? (r.ayat_end ? `${r.ayat_start}-${r.ayat_end}` : String(r.ayat_start)) : '',
-          tajwid: r.tajwid_score || 0,
-          makhraj: r.makhraj_score || 0,
-          kelancaran: r.kelancaran_score || 0,
-          rata: r.rata_rata || 0,
-          status: r.status === 'LANJUT' ? 'Lanjut' as const : 'Ulang' as const,
-          jenis: r.jenis || 'SABAQ',
-          createdAt: r.created_at || '',
-        }));
+        const mapped = (data.data || []).map(mapper);
         setRecords(mapped);
 
         if (mapped.length > 0) {
@@ -68,42 +103,19 @@ export default function SetoranSantriPage() {
           setStats({ total: mapped.length, rataRata: parseFloat((sum / mapped.length).toFixed(1)) });
         }
       } catch (e) {
-        console.error('Error loading setoran', e);
+        console.error('Error loading data', e);
       }
     };
 
     loadData();
-  }, [user]);
+  }, [user, apiPath, mapper]);
 
   const avatarInitials = user
     ? user.fullName.split(' ').map(n => n.charAt(0)).slice(0, 2).join('')
     : '';
 
-  return (
-    <div className="min-h-screen bg-tosca-50/30 flex flex-col pb-24 lg:pb-8">
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-tosca-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/santri" className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors cursor-pointer">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <span className="text-base font-black text-tosca-900 block">Setoran Hafalan</span>
-              <span className="text-[10px] text-tosca-500 font-medium">Riwayat setoran Anda</span>
-            </div>
-          </div>
-          <div className={`h-10 w-10 rounded-xl ${settings.logoUrl ? 'bg-white p-1 border border-tosca-100' : 'bg-tosca-600'} flex items-center justify-center text-white font-bold text-sm overflow-hidden`}>
-            {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
-            ) : (
-              <BookOpen className="h-5 w-5" />
-            )}
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 space-y-6">
-        {stats.total > 0 && (
+  return (<>
+    {stats.total > 0 && (
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl border border-tosca-50 shadow-sm p-5">
               <p className="text-xs font-semibold text-tosca-500 uppercase tracking-wider">Total Setoran</p>
@@ -120,27 +132,32 @@ export default function SetoranSantriPage() {
           <div className="text-center py-16">
             <BookOpen className="h-16 w-16 mx-auto text-tosca-200 mb-4" />
             <p className="text-tosca-400 font-semibold">Belum ada setoran</p>
-            <p className="text-tosca-300 text-sm mt-1">Setoran akan muncul setelah musyrif mencatatnya</p>
+            <p className="text-tosca-300 text-sm mt-1">Setoran akan muncul setelah guru mencatatnya</p>
           </div>
         ) : (
           <div className="space-y-3">
             {records.map((rec) => {
-              const StatusIcon = statusConfig[rec.status]?.icon || CheckCircle2;
+              const showScoreGrid = level === 'TAHSIN';
               return (
                 <div key={rec.id} className="bg-white rounded-2xl border border-tosca-50 shadow-sm p-5">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <BookMarked className="h-4 w-4 text-tosca-500" />
-                        <span className="font-bold text-tosca-900">{rec.surah}</span>
-                        {rec.ayat && <span className="text-tosca-400 text-sm">Ayat {rec.ayat}</span>}
+                        <span className="font-bold text-tosca-900">{rec.detail1}</span>
+                        {rec.detail2 && <span className="text-tosca-400 text-sm">{labels.label2} {rec.detail2}</span>}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-tosca-400">
-                        <span className={`px-2 py-0.5 rounded-full border font-semibold ${statusConfig[rec.status]?.color || ''}`}>
-                          <StatusIcon className="h-3 w-3 inline mr-0.5" />
-                          {statusConfig[rec.status]?.label || rec.status}
-                        </span>
-                        <span>{rec.jenis}</span>
+                        {rec.status && (
+                          <span className={`px-2 py-0.5 rounded-full border font-semibold ${
+                            rec.status === 'Lanjut' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            rec.status === 'Ulang' ? 'bg-amber-50 text-amber-700 border-amber-200' : ''
+                          }`}>
+                            {rec.status === 'Lanjut' ? <CheckCircle2 className="h-3 w-3 inline mr-0.5" /> :
+                             rec.status === 'Ulang' ? <AlertCircle className="h-3 w-3 inline mr-0.5" /> : null}
+                            {rec.status}
+                          </span>
+                        )}
                         <span>{rec.createdAt ? new Date(rec.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
                       </div>
                     </div>
@@ -149,49 +166,27 @@ export default function SetoranSantriPage() {
                       <p className="text-[10px] text-tosca-400 font-semibold">NILAI</p>
                     </div>
                   </div>
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-tosca-50 rounded-xl py-2">
-                      <p className="text-xs text-tosca-400 font-medium">Tajwid</p>
-                      <p className="text-sm font-bold text-tosca-700">{rec.tajwid}</p>
+                  {showScoreGrid && (
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-tosca-50 rounded-xl py-2">
+                        <p className="text-xs text-tosca-400 font-medium">Tajwid</p>
+                        <p className="text-sm font-bold text-tosca-700">{rec.score1}</p>
+                      </div>
+                      <div className="bg-tosca-50 rounded-xl py-2">
+                        <p className="text-xs text-tosca-400 font-medium">Makhraj</p>
+                        <p className="text-sm font-bold text-tosca-700">{rec.score2}</p>
+                      </div>
+                      <div className="bg-tosca-50 rounded-xl py-2">
+                        <p className="text-xs text-tosca-400 font-medium">Kelancaran</p>
+                        <p className="text-sm font-bold text-tosca-700">{rec.score3}</p>
+                      </div>
                     </div>
-                    <div className="bg-tosca-50 rounded-xl py-2">
-                      <p className="text-xs text-tosca-400 font-medium">Makhraj</p>
-                      <p className="text-sm font-bold text-tosca-700">{rec.makhraj}</p>
-                    </div>
-                    <div className="bg-tosca-50 rounded-xl py-2">
-                      <p className="text-xs text-tosca-400 font-medium">Kelancaran</p>
-                      <p className="text-sm font-bold text-tosca-700">{rec.kelancaran}</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
           </div>
         )}
-      </main>
-
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-tosca-100 px-3 sm:px-4 py-2 flex items-center justify-around shadow-2xl">
-        <Link href="/dashboard/santri" className="flex flex-col items-center gap-0.5 text-tosca-400 hover:text-tosca-600 transition-colors cursor-pointer">
-          <Home className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">Home</span>
-        </Link>
-        <Link href="/dashboard/santri/nilai" className="flex flex-col items-center gap-0.5 text-tosca-400 hover:text-tosca-600 transition-colors cursor-pointer">
-          <Star className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">Nilai</span>
-        </Link>
-        <Link href="/dashboard/santri/presensi" className="flex flex-col items-center gap-0.5 text-tosca-400 hover:text-tosca-600 transition-colors cursor-pointer">
-          <BookOpen className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">Hadir</span>
-        </Link>
-        <Link href="/dashboard/santri/virtual-class" className="flex flex-col items-center gap-0.5 text-tosca-400 hover:text-tosca-600 transition-colors cursor-pointer">
-          <Video className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">Virtual</span>
-        </Link>
-        <Link href="/dashboard/santri/profil" className="flex flex-col items-center gap-0.5 text-tosca-400 hover:text-tosca-600 transition-colors cursor-pointer">
-          <User className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">User</span>
-        </Link>
-      </nav>
-    </div>
+  </>
   );
 }

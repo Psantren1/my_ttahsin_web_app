@@ -69,49 +69,46 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Generate unique ID and NISN
-    const newSantri = {
-      ...formData,
-      id: Date.now().toString(),
-      nis: formData.nis || Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-      nisn: formData.nisn || Math.floor(1000000000 + Math.random() * 9000000000).toString(),
-      kelas_nama: kelasOptions.find(k => k.id === formData.kelas_id)?.nama || '',
-      is_active: true,
-      created_at: new Date().toISOString().split('T')[0],
-    };
+    try {
+      const res = await fetch('/api/santri', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: formData.nama_lengkap,
+          nis: formData.nis || undefined,
+          nisn: formData.nisn || undefined,
+          kelas_id: formData.kelas_id || undefined,
+          nama_ayah: formData.nama_ayah,
+          nama_ibu: formData.nama_ibu,
+          pekerjaan_ayah: formData.pekerjaan_ayah,
+          pekerjaan_ibu: formData.pekerjaan_ibu,
+          no_wa: formData.no_wa,
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
 
-    // Create login account
-    const newAccount = {
-      id: newSantri.id,
-      username: formData.username,
-      password: formData.password,
-      fullName: formData.nama_lengkap,
-      email: `${formData.username}@baitulhuffaz.sch.id`,
-      role: 'SANTRI',
-      nis: newSantri.nis,
-      created_at: new Date().toISOString(),
-    };
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Gagal mendaftarkan siswa');
+        setIsLoading(false);
+        return;
+      }
 
-    // Save to localStorage
-    const storedSantriList = localStorage.getItem('santri_list');
-    const santrilist = storedSantriList ? JSON.parse(storedSantriList) : [];
-    santrilist.push(newSantri);
-    localStorage.setItem('santri_list', JSON.stringify(santrilist));
+      const kelas_nama = kelasOptions.find(k => k.id === formData.kelas_id)?.nama || '';
+      setRegisteredData({
+        nama: formData.nama_lengkap,
+        username: formData.username,
+        password: formData.password,
+        kelas: kelas_nama,
+      });
 
-    const storedAccounts = localStorage.getItem('santri_accounts');
-    const accounts = storedAccounts ? JSON.parse(storedAccounts) : [];
-    accounts.push(newAccount);
-    localStorage.setItem('santri_accounts', JSON.stringify(accounts));
-
-    setRegisteredData({
-      nama: formData.nama_lengkap,
-      username: formData.username,
-      password: formData.password,
-      kelas: newSantri.kelas_nama,
-    });
-
-    setIsLoading(false);
-    setShowSuccess(true);
+      setIsLoading(false);
+      setShowSuccess(true);
+    } catch {
+      alert('Gagal mendaftarkan siswa. Periksa koneksi.');
+      setIsLoading(false);
+    }
   };
 
   // Reset form
@@ -156,7 +153,7 @@ export default function RegisterPage() {
               <CheckCircle2 className="h-12 w-12 text-green-600" />
             </div>
             <h1 className="text-2xl font-extrabold text-tosca-900 mb-2">Pendaftaran Berhasil!</h1>
-            <p className="text-tosca-600">Santri baru telah berhasil didaftarkan.</p>
+            <p className="text-tosca-600">Siswa baru telah berhasil didaftarkan.</p>
           </div>
 
           <div className="bg-tosca-50/50 rounded-2xl p-6 border border-tosca-100 space-y-4">
@@ -183,7 +180,7 @@ export default function RegisterPage() {
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mt-4">
               <p className="text-xs text-yellow-700 font-medium text-center">
-                Simpan credentials di atas! Santri bisa login dengan username dan password tersebut.
+                Simpan credentials di atas! Siswa bisa login dengan username dan password tersebut.
               </p>
             </div>
           </div>
@@ -199,13 +196,13 @@ export default function RegisterPage() {
               onClick={handleReset}
               className="w-full py-3 bg-white border-2 border-tosca-100 text-tosca-600 rounded-xl font-bold hover:bg-tosca-50 transition-all"
             >
-              Daftar Santri Baru
+              Daftar Siswa Baru
             </button>
             <Link
               href="/dashboard/admin/santri"
               className="w-full py-3 text-center text-tosca-600 font-bold hover:text-tosca-800 transition-colors"
             >
-              Kembali ke Manajemen Santri
+              Kembali ke Manajemen Siswa
             </Link>
           </div>
         </div>
@@ -227,7 +224,7 @@ export default function RegisterPage() {
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-extrabold text-tosca-900">Pendaftaran Santri Baru</h1>
+                <h1 className="text-lg font-extrabold text-tosca-900">Pendaftaran Siswa Baru</h1>
                 <p className="text-xs text-tosca-500">Baitul Huffaz Management System</p>
               </div>
             </div>
@@ -244,7 +241,7 @@ export default function RegisterPage() {
                 <UserPlus size={24} className="text-tosca-600" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-tosca-900">Form Pendaftaran Santri</h2>
+                <h2 className="text-xl font-bold text-tosca-900">Form Pendaftaran Siswa</h2>
                 <p className="text-sm text-tosca-600">Lengkapi data di bawah untuk mendaftarkan santri baru.</p>
               </div>
             </div>
@@ -383,7 +380,7 @@ export default function RegisterPage() {
 
             {/* Info Akun */}
             <div className="bg-gradient-to-r from-tosca-50 to-blue-50 rounded-2xl p-4 border border-tosca-100">
-              <h3 className="text-sm font-bold text-tosca-700 mb-4">Akun Login Santri</h3>
+              <h3 className="text-sm font-bold text-tosca-700 mb-4">Akun Login Siswa</h3>
               <p className="text-xs text-tosca-500 mb-4">Username dan password akan digenerate otomatis. Password bisa diubah kemudian.</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -433,7 +430,7 @@ export default function RegisterPage() {
                 ) : (
                   <>
                     <UserPlus size={18} />
-                    Daftarkan Santri
+                    Daftarkan Siswa
                   </>
                 )}
               </button>
@@ -445,10 +442,10 @@ export default function RegisterPage() {
         <div className="mt-6 bg-blue-50 border border-blue-100 rounded-2xl p-4">
           <p className="text-sm font-bold text-blue-800 mb-2">Informasi Penting:</p>
           <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
-            <li>Santri yang didaftarkan akan otomatis memiliki akun login.</li>
+            <li>Siswa yang didaftarkan akan otomatis memiliki akun login.</li>
             <li>Username dan password default bisa dilihat setelah pendaftaran berhasil.</li>
-            <li>Santri bisa login menggunakan username atau email dengan password yang sama.</li>
-            <li>Untuk mengedit atau menghapus data, silakan ke halaman Manajemen Santri.</li>
+            <li>Siswa bisa login menggunakan username atau email dengan password yang sama.</li>
+            <li>Untuk mengedit atau menghapus data, silakan ke halaman Manajemen Siswa.</li>
           </ul>
         </div>
       </div>

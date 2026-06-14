@@ -2,132 +2,119 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { cn } from '@/lib/utils/helper';
 import {
-  LayoutDashboard,
-  BookOpen,
-  Star,
-  CheckSquare,
-  ClipboardList,
-  Calendar,
-  Target,
-  Award,
-  LogOut,
-  X,
-  GraduationCap,
+  LayoutDashboard, BookOpen, Star, BookOpenCheck, ClipboardList,
+  CheckSquare, Calendar, Target, Award, LogOut, X,
+  GraduationCap, Video, Megaphone, User, BookMarked, RefreshCw
 } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
 }
 
-const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', tab: 'dashboard' },
-  { icon: BookOpen,        label: 'Input Setoran',   tab: 'setoran' },
-  { icon: Star,            label: 'Input Nilai',     tab: 'nilai' },
-  { icon: CheckSquare,     label: 'Status Hafalan',  tab: 'status' },
-  { icon: ClipboardList,   label: 'Evaluasi Siswa',  tab: 'evaluasi' },
-  { icon: CheckSquare,     label: 'Kehadiran Siswa', tab: 'kehadiran' },
-  { icon: Calendar,        label: 'Kelola Jadwal',   tab: 'jadwal' },
-  { icon: Target,          label: 'Target Hafalan',  tab: 'target' },
-  { icon: Award,           label: 'Sertifikat',      tab: 'sertifikat' },
-];
+const LEVEL_MENU: Record<string, { icon: any; label: string; href: string }> = {
+  BTQ_PEMULA: { icon: BookOpen, label: 'BTQ1', href: '/dashboard/musyrif/setoran' },
+  BTQ_LANJUTAN: { icon: BookOpenCheck, label: 'BTQ2', href: '/dashboard/musyrif/setoran' },
+  TAHSIN: { icon: BookOpen, label: 'Tahsin', href: '/dashboard/musyrif/setoran' },
+  TAHFIDZ: { icon: BookMarked, label: 'Tahfidz', href: '/dashboard/musyrif/setoran' },
+  MUROJAAH: { icon: RefreshCw, label: 'Murojaah', href: '/dashboard/musyrif/setoran' },
+};
 
-export default function MusyrifSidebar({ isOpen, setIsOpen, activeTab, setActiveTab }: SidebarProps) {
+export default function MusyrifSidebar({ isOpen, setIsOpen }: SidebarProps) {
+  const pathname = usePathname();
   const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const level = user?.levelProgram || 'TAHSIN';
+  const programItem = LEVEL_MENU[level] || LEVEL_MENU['TAHSIN'];
+  const menuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard/musyrif' },
+    { icon: Calendar, label: 'Jadwal', href: '/dashboard/musyrif/jadwal' },
+    { icon: programItem.icon, label: programItem.label, href: programItem.href },
+    { icon: Star, label: 'Input Nilai', href: '/dashboard/musyrif/nilai' },
+    { icon: BookOpenCheck, label: 'Status Tahsin', href: '/dashboard/musyrif/status' },
+    { icon: ClipboardList, label: 'Evaluasi', href: '/dashboard/musyrif/evaluasi' },
+    { icon: CheckSquare, label: 'Presensi', href: '/dashboard/musyrif/presensi' },
+    { icon: Target, label: 'Target', href: '/dashboard/musyrif/target' },
+    { icon: Video, label: 'Kelas Virtual', href: '/dashboard/musyrif/virtual-class' },
+    { icon: Award, label: 'Sertifikat', href: '/dashboard/musyrif/sertifikat' },
+    { icon: Megaphone, label: 'Informasi', href: '/dashboard/musyrif/informasi' },
+    { icon: User, label: 'Profil', href: '/dashboard/musyrif/profil' },
+  ];
 
   const handleLogout = () => {
+    logout();
     router.push('/login');
-  };
-
-  const handleNav = (tab: string) => {
-    setActiveTab(tab);
-    setIsOpen(false);
   };
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden transition-opacity"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setIsOpen(false)} />
       )}
-
-      {/* Sidebar */}
-      <aside className={`
-        fixed top-0 left-0 z-50 h-full w-72 bg-white border-r border-tosca-100 transition-transform duration-300 ease-in-out
-        lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b border-tosca-50">
-            <div className="flex items-center gap-3">
-              <div className="bg-tosca-600 p-2 rounded-xl shadow-lg shadow-tosca-200">
-                <GraduationCap className="text-white h-6 w-6" />
-              </div>
-              <div>
-                <span className="text-lg font-extrabold text-tosca-900 block leading-tight">Baitul Huffaz</span>
-                <span className="text-[10px] font-bold text-tosca-400 uppercase tracking-widest">Musyrif Panel</span>
-              </div>
+      <aside className={cn(
+        'fixed top-0 left-0 z-50 h-full w-72 bg-white border-r border-surface-200 transition-transform duration-300 ease-in-out flex flex-col',
+        'lg:translate-x-0',
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <div className="flex items-center justify-between p-5 border-b border-surface-100">
+          <div className="flex items-center gap-3">
+            <div className="bg-tosca-600 p-2 rounded-xl shadow-md">
+              <GraduationCap className="text-white h-5 w-5" />
             </div>
-            <button
-              className="lg:hidden p-2 text-tosca-500 hover:bg-tosca-50 rounded-lg"
-              onClick={() => setIsOpen(false)}
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Profile Card */}
-          <div className="mx-4 mt-4 p-4 bg-tosca-50 rounded-2xl border border-tosca-100">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-tosca-600 text-white flex items-center justify-center text-xl font-black shadow-md">
-                M
-              </div>
-              <div>
-                <p className="font-extrabold text-tosca-900 text-sm">Ust. Mansyur</p>
-                <p className="text-[11px] text-tosca-500 font-bold">Musyrif • Kelas A</p>
-              </div>
+            <div>
+              <span className="text-base font-bold text-tosca-900 block leading-tight">my_ttahsin</span>
+              <span className="text-[9px] font-semibold text-surface-400 uppercase tracking-widest">Guru Panel</span>
             </div>
           </div>
+          <button className="lg:hidden p-1.5 text-surface-400 hover:bg-surface-50 rounded-lg" onClick={() => setIsOpen(false)}>
+            <X size={18} />
+          </button>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-            {menuItems.map((item) => {
-              const isActive = activeTab === item.tab;
-              return (
-                <button
-                  key={item.tab}
-                  onClick={() => handleNav(item.tab)}
-                  className={`
-                    flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all group text-left
-                    ${isActive
-                      ? 'bg-tosca-600 text-white shadow-lg shadow-tosca-200'
-                      : 'text-tosca-600 hover:bg-tosca-50 hover:text-tosca-700'}
-                  `}
-                >
-                  <item.icon size={20} className={isActive ? 'text-white' : 'text-tosca-500 group-hover:text-tosca-600'} />
-                  <span className="font-semibold text-sm">{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Bottom */}
-          <div className="p-4 border-t border-tosca-50">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
-            >
-              <LogOut size={20} />
-              <span className="font-semibold text-sm">Keluar</span>
-            </button>
+        <div className="mx-3 mt-3 p-3 bg-tosca-50 rounded-2xl border border-tosca-100">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-tosca-600 text-white flex items-center justify-center text-sm font-bold shadow-sm shrink-0">
+              {user?.fullName?.charAt(0) || 'U'}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-tosca-900 text-sm truncate">{user?.fullName || 'Guru'}</p>
+              <p className="text-[10px] text-surface-500 font-medium">Guru</p>
+            </div>
           </div>
+        </div>
+
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className={cn(
+                  'flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl transition-all group',
+                  isActive
+                    ? 'bg-tosca-600 text-white shadow-sm'
+                    : 'text-surface-600 hover:bg-surface-50 hover:text-tosca-600'
+                )}
+              >
+                <item.icon size={18} className={cn(isActive ? 'text-white' : 'text-surface-400 group-hover:text-tosca-600')} />
+                <span className="font-medium text-sm">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="p-3 border-t border-surface-100">
+          <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors">
+            <LogOut size={18} />
+            <span className="font-medium text-sm">Keluar</span>
+          </button>
         </div>
       </aside>
     </>

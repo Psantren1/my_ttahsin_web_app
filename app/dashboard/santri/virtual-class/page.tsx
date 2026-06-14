@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   GraduationCap, 
@@ -16,6 +16,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { useSettings } from '@/lib/hooks/useSettings';
+import { useZoomMeetingsList } from '@/lib/hooks/useApi';
 import { VirtualMeeting } from '../../musyrif/virtual-class/page';
 
 function toGoogleDriveEmbed(url: string): string | null {
@@ -36,36 +37,24 @@ function toGoogleDriveEmbed(url: string): string | null {
 
 export default function VirtualClassSantriPage() {
   const { settings } = useSettings();
-  const [meetings, setMeetings] = useState<VirtualMeeting[]>([]);
+  const { data: zoomRes } = useZoomMeetingsList();
+  const meetings: VirtualMeeting[] = (zoomRes?.data || []).map((m: any) => {
+    let parsedDesc = { googleDriveLink: '', youtubeLink: '' };
+    if (m.description) {
+      try { parsedDesc = JSON.parse(m.description); } catch (e) { /* ignore */ }
+    }
+    return {
+      id: m.id,
+      namaPertemuan: m.topic || '',
+      googleDriveLink: parsedDesc.googleDriveLink || '',
+      youtubeLink: parsedDesc.youtubeLink || '',
+      zoomLink: m.link || '',
+      createdAt: m.meeting_date ? new Date(m.meeting_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+    };
+  });
   const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
   const [viewingDriveUrl, setViewingDriveUrl] = useState<string | null>(null);
   const [viewingDriveTitle, setViewingDriveTitle] = useState('');
-
-  useEffect(() => {
-    const loadMeetings = async () => {
-      try {
-        const res = await fetch('/api/zoom-meetings');
-        const data = await res.json();
-        setMeetings((data.data || []).map((m: any) => {
-          let parsedDesc = { googleDriveLink: '', youtubeLink: '' };
-          if (m.description) {
-            try { parsedDesc = JSON.parse(m.description); } catch (e) { /* ignore */ }
-          }
-          return {
-            id: m.id,
-            namaPertemuan: m.topic || '',
-            googleDriveLink: parsedDesc.googleDriveLink || '',
-            youtubeLink: parsedDesc.youtubeLink || '',
-            zoomLink: m.link || '',
-            createdAt: m.meeting_date ? new Date(m.meeting_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
-          };
-        }));
-      } catch (e) {
-        console.error('Error fetching meetings', e);
-      }
-    };
-    loadMeetings();
-  }, []);
 
   const toggleExpand = (id: string) => {
     if (expandedMeetingId === id) {
@@ -82,38 +71,16 @@ export default function VirtualClassSantriPage() {
     return (match && match[2].length === 11) ? match[2] : null;
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-24 lg:pb-8">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-tosca-100/50 shadow-sm backdrop-blur-md bg-white/95">
-        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/santri" className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors cursor-pointer">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <span className="text-base font-black text-tosca-950 block tracking-tight">Kelas Virtual</span>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-[10px] text-tosca-500 font-extrabold uppercase tracking-wider">{settings.appName} • TA {settings.tahunAjaran}</span>
-              </div>
-            </div>
-          </div>
-          <div className="h-9 w-9 rounded-xl bg-tosca-600 text-white flex items-center justify-center font-bold text-sm">AF</div>
-        </div>
-      </header>
-
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Hero Card */}
-        <div className="bg-gradient-to-tr from-tosca-900 to-teal-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[120px]">
+  return (<>
+    <div className="bg-gradient-to-tr from-tosca-900 to-tosca-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[120px]">
           <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none hidden md:block">
             <GraduationCap size={120} />
           </div>
           <div className="space-y-1">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">Materi & Kelas Halaqah</h1>
-            <p className="text-xs text-teal-100 font-medium leading-relaxed max-w-xl">
-              Akses berkas Google Drive, tonton video rekaman bimbingan YouTube, atau bergabung ke sesi tatap muka online via Zoom yang disediakan oleh Musyrif Anda.
-            </p>
+              <p className="text-xs text-tosca-100 font-medium leading-relaxed max-w-xl">
+                Akses berkas Google Drive, tonton video rekaman bimbingan YouTube, atau bergabung ke sesi tatap muka online via Zoom yang disediakan oleh Guru Anda.
+              </p>
           </div>
         </div>
 
@@ -154,9 +121,9 @@ export default function VirtualClassSantriPage() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-base font-extrabold text-tosca-950">Belum Ada Materi</h3>
-                <p className="text-xs text-tosca-500 max-w-xs mx-auto">
-                  Musyrif Anda belum mengunggah pertemuan atau materi kelas virtual saat ini.
-                </p>
+                  <p className="text-xs text-tosca-500 max-w-xs mx-auto">
+                    Guru Anda belum mengunggah pertemuan atau materi kelas virtual saat ini.
+                  </p>
               </div>
             </div>
           ) : (
@@ -165,7 +132,7 @@ export default function VirtualClassSantriPage() {
                 const isExpanded = expandedMeetingId === meeting.id;
                 const ytId = meeting.youtubeLink ? getYoutubeId(meeting.youtubeLink) : null;
 
-                return (
+                return (<>
                   <div 
                     key={meeting.id} 
                     className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300 hover:border-tosca-200"
@@ -195,7 +162,7 @@ export default function VirtualClassSantriPage() {
                             <span className="p-1.5 bg-red-50 text-red-500 rounded-lg" title="Video YouTube Tersedia"><Youtube size={14} /></span>
                           )}
                           {meeting.zoomLink && (
-                            <span className="p-1.5 bg-teal-50 text-teal-500 rounded-lg" title="Zoom Meeting Tersedia"><Video size={14} /></span>
+                            <span className="p-1.5 bg-tosca-50 text-tosca-500 rounded-lg" title="Zoom Meeting Tersedia"><Video size={14} /></span>
                           )}
                         </div>
                         
@@ -212,20 +179,20 @@ export default function VirtualClassSantriPage() {
                       <div className="p-6 border-t border-slate-100 bg-tosca-50/5 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
                         {/* 1. Zoom Section */}
                         {meeting.zoomLink && (
-                          <div className="bg-teal-900 text-white rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden">
+                          <div className="bg-tosca-900 text-white rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden">
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none">
                               <Video size={70} />
                             </div>
                             <div className="space-y-1 z-10">
                               <span className="px-2 py-0.5 bg-green-500 text-white rounded text-[8px] font-black uppercase">Tatap Muka Online</span>
                               <h4 className="text-base font-extrabold">Sesi Pembelajaran Zoom</h4>
-                              <p className="text-[10px] text-teal-200">Silakan klik tombol di samping untuk langsung bergabung ke tatap muka online.</p>
+                              <p className="text-[10px] text-tosca-200">Silakan klik tombol di samping untuk langsung bergabung ke tatap muka online.</p>
                             </div>
                             <a 
                               href={meeting.zoomLink} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="px-5 py-3 bg-white text-teal-900 rounded-xl font-black text-xs hover:bg-teal-50 transition-colors flex items-center justify-center gap-1.5 w-full sm:w-auto shadow-sm cursor-pointer z-10"
+                              className="px-5 py-3 bg-white text-tosca-900 rounded-xl font-black text-xs hover:bg-tosca-50 transition-colors flex items-center justify-center gap-1.5 w-full sm:w-auto shadow-sm cursor-pointer z-10"
                             >
                               <Video size={16} />
                               Gabung Rapat Zoom
@@ -300,12 +267,12 @@ export default function VirtualClassSantriPage() {
                       </div>
                     )}
                   </div>
+                </>
                 );
               })}
             </div>
           )}
         </div>
-      </main>
-    </div>
+  </>
   );
 }

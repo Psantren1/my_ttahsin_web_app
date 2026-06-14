@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserByEmail, getUserByUsername, hashPassword } from '@/lib/services/user.service';
+import { getUserByEmail, getUserByUsername, verifyPassword, hashPassword } from '@/lib/services/user.service';
+import { query } from '@/lib/db/client';
+import { signJWT } from '@/lib/auth/jwt';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,11 +20,18 @@ export async function POST(request: NextRequest) {
       user = await getUserByUsername(email);
     }
 
-    if (!user || user.password_hash !== hashPassword(password)) {
+    if (!user || !verifyPassword(password, user.password_hash)) {
       return NextResponse.json(
         { error: 'Email/username atau password salah' },
         { status: 401 }
       );
+    }
+
+    // Auto-upgrade legacy SHA-256 hash to bcrypt
+    if (!user.password_hash.startsWith('$2')) {
+      const bcryptHash = hashPassword(password);
+      await query('UPDATE users SET password_hash = $1 WHERE id = $2', [bcryptHash, user.id]);
+      user.password_hash = bcryptHash;
     }
 
     if (!user.is_active) {
@@ -32,13 +41,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionToken = Buffer.from(JSON.stringify({
+    const sessionToken = signJWT({
       id: user.id,
       email: user.email,
       fullName: user.full_name,
       role: user.role,
       exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    })).toString('base64');
+    });
 
     const response = NextResponse.json({
       success: true,

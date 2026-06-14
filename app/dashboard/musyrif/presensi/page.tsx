@@ -1,7 +1,6 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   GraduationCap, 
@@ -19,6 +18,8 @@ import {
 } from 'lucide-react';
 import { useSettings } from '@/lib/hooks/useSettings';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useSantriList, useAbsensiList, useCreateAbsensi, apiKeys } from '@/lib/hooks/useApi';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Santri {
   id: string;
@@ -46,10 +47,10 @@ export default function PresensiPage() {
   const { settings } = useSettings();
   const { user } = useAuth();
 
-  // Data states
-  const [santriList, setSantriList] = useState<Santri[]>([]);
-  const [records, setRecords] = useState<PresensiRecord[]>([]);
-  const [musyrifKelasId, setMusyrifKelasId] = useState<string | null>(null);
+  const { data: santriData } = useSantriList();
+  const { data: absensiData } = useAbsensiList();
+  const createAbsensi = useCreateAbsensi();
+  const queryClient = useQueryClient();
   
   // Interactive UI states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,64 +63,32 @@ export default function PresensiPage() {
   
   const [notification, setNotification] = useState<string | null>(null);
 
+  const santriList: Santri[] = (santriData?.data || []).map((s: any) => ({
+    id: s.id,
+    nis: s.nis || '',
+    nisn: s.nisn || '',
+    nama_lengkap: s.full_name || '',
+    kelas_id: s.kelas_id || '',
+    kelas_nama: s.kelas_nama || '',
+    is_active: s.is_active,
+  }));
+
+  const records: PresensiRecord[] = (absensiData?.data || []).map((r: any) => ({
+    id: r.id,
+    meetingId: r.tanggal || '',
+    meetingName: `Presensi ${new Date(r.tanggal || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+    santriId: r.santuario_id,
+    santriName: r.santri_name || '',
+    nis: r.nis || '',
+    kelasNama: r.kelas_nama || '',
+    status: r.status === 'HADIR' ? 'Hadir' as const : r.status === 'IZIN' ? 'Izin' as const : r.status === 'SAKIT' ? 'Sakit' as const : 'Alpa' as const,
+    createdAt: r.created_at || ''
+  }));
+
   const showNotification = (message: string) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
   };
-
-  const loadData = async () => {
-    if (!user) return;
-    try {
-      // Get musyrif's kelas_id
-      const profileRes = await fetch(`/api/musyrif/${user.id}`);
-      const profileJson = await profileRes.json();
-      const mKelasId = profileJson.data?.kelas_id || null;
-      setMusyrifKelasId(mKelasId);
-
-      const [santriRes, absensiRes] = mKelasId
-        ? await Promise.all([
-            fetch(`/api/santri?kelas_id=${mKelasId}`),
-            fetch(`/api/absensi?kelas_id=${mKelasId}`)
-          ])
-        : await Promise.all([
-            fetch('/api/santri'),
-            fetch('/api/absensi')
-          ]);
-      if (santriRes.ok) {
-        const santriData = await santriRes.json();
-        setSantriList((santriData.data || []).map((s: any) => ({
-          id: s.id,
-          nis: s.nis || '',
-          nisn: s.nisn || '',
-          nama_lengkap: s.full_name || '',
-          kelas_id: s.kelas_id || '',
-          kelas_nama: s.kelas_nama || '',
-          is_active: s.is_active,
-        })));
-      }
-      if (absensiRes.ok) {
-        const absensiData = await absensiRes.json();
-        const mapped = (absensiData.data || []).map((r: any) => ({
-          id: r.id,
-          meetingId: r.tanggal || '',
-          meetingName: `Presensi ${new Date(r.tanggal || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`,
-          santriId: r.santuario_id,
-          santriName: r.santri_name || '',
-          nis: r.nis || '',
-          kelasNama: r.kelas_nama || '',
-          status: r.status === 'HADIR' ? 'Hadir' as const : r.status === 'IZIN' ? 'Izin' as const : r.status === 'SAKIT' ? 'Sakit' as const : 'Alpa' as const,
-          createdAt: r.created_at || ''
-        }));
-        setRecords(mapped);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    if (user) loadData();
-  }, [user]);
 
   // Handle setting up a new meeting session
   const handleAddMeeting = (e: React.FormEvent) => {
@@ -166,19 +135,13 @@ export default function PresensiPage() {
 
     try {
       await Promise.all(santriList.map(s =>
-        fetch('/api/absensi', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            santuario_id: s.id,
-            tanggal: today,
-            status: attendanceStates[s.id] === 'Hadir' ? 'HADIR' : attendanceStates[s.id] === 'Izin' ? 'IZIN' : attendanceStates[s.id] === 'Sakit' ? 'SAKIT' : 'ALPA',
-            upsert: true
-          })
+        createAbsensi.mutateAsync({
+          santuario_id: s.id,
+          tanggal: today,
+          status: attendanceStates[s.id] === 'Hadir' ? 'HADIR' : attendanceStates[s.id] === 'Izin' ? 'IZIN' : attendanceStates[s.id] === 'Sakit' ? 'SAKIT' : 'ALPA',
+          upsert: true
         })
       ));
-
-      await loadData();
 
       setCurrentMeetingId(null);
       setCurrentMeetingName('');
@@ -193,9 +156,22 @@ export default function PresensiPage() {
 
   // Delete a specific meeting session from history
   const handleDeleteMeeting = async (meetingId: string, meetingName: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus data presensi sesi "${meetingName}"?`)) {
-      await loadData();
+    if (!confirm(`Apakah Anda yakin ingin menghapus data presensi sesi "${meetingName}"?`)) return;
+
+    const recordsToDelete = records.filter(r => r.meetingId === meetingId);
+    if (recordsToDelete.length === 0) return;
+
+    try {
+      await Promise.all(
+        recordsToDelete.map(r =>
+          fetch(`/api/absensi/${r.id}`, { method: 'DELETE' })
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: apiKeys.absensi.all });
       showNotification(`Sesi "${meetingName}" berhasil dihapus.`);
+    } catch (e) {
+      console.error(e);
+      alert('Gagal menghapus data presensi');
     }
   };
 
@@ -213,31 +189,11 @@ export default function PresensiPage() {
   const historicalMeetings = Object.values(uniqueMeetingsMap);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-24 lg:pb-8">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-tosca-100/50 shadow-sm backdrop-blur-md bg-white/95">
-        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/musyrif" className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors cursor-pointer">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <span className="text-base font-black text-tosca-950 block tracking-tight">Presensi Kehadiran</span>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-[10px] text-tosca-500 font-extrabold uppercase tracking-wider">{settings.appName} • TA {settings.tahunAjaran}</span>
-              </div>
-            </div>
-          </div>
-          <div className="h-9 w-9 rounded-xl bg-tosca-600 text-white flex items-center justify-center font-bold text-sm">UM</div>
-        </div>
-      </header>
-
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <>
         {/* Notification */}
         {notification && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slate-900/95 backdrop-blur text-white px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4">
-            <CheckCircle2 className="text-teal-400" size={18} />
+            <CheckCircle2 className="text-tosca-400" size={18} />
             <span className="text-xs font-extrabold">{notification}</span>
           </div>
         )}
@@ -276,7 +232,7 @@ export default function PresensiPage() {
           <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-50 bg-slate-50/20">
               <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
-                <CheckSquare className="text-tosca-600" size={18} /> Lembar Kehadiran Santri
+                <CheckSquare className="text-tosca-600" size={18} /> Lembar Kehadiran Siswa
               </h3>
             </div>
             
@@ -358,7 +314,7 @@ export default function PresensiPage() {
                       <p className="text-[10px] text-slate-400 font-bold flex items-center gap-2">
                         <span>Tanggal: {m.date}</span>
                         <span>•</span>
-                        <span className="text-emerald-600 font-black">Kehadiran: {hadirCount}/{totalCount} Santri</span>
+                        <span className="text-emerald-600 font-black">Kehadiran: {hadirCount}/{totalCount} Siswa</span>
                       </p>
                     </div>
                     <button 
@@ -374,8 +330,6 @@ export default function PresensiPage() {
             </div>
           )}
         </div>
-      </main>
-
       {/* Modal Dialog Tambah Pertemuan */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
@@ -414,29 +368,6 @@ export default function PresensiPage() {
         </div>
       )}
 
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-100 px-3 sm:px-6 py-2.5 flex items-center justify-around shadow-2xl">
-        <Link href="/dashboard/musyrif" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <Home size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Utama</span>
-        </Link>
-        <Link href="/dashboard/musyrif/setoran" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <BookOpen size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Setoran</span>
-        </Link>
-        <Link href="/dashboard/musyrif/nilai" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <Star size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Nilai</span>
-        </Link>
-        <Link href="/dashboard/musyrif/presensi" className="flex flex-col items-center justify-center gap-1 flex-1 text-tosca-600">
-          <CheckSquare size={20} strokeWidth={2.5} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Presensi</span>
-        </Link>
-        <Link href="/dashboard/musyrif/profil" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <span className="text-base">👤</span>
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Profil</span>
-        </Link>
-      </nav>
-    </div>
+    </>
   );
 }

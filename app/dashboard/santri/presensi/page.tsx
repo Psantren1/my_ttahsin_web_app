@@ -1,5 +1,4 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -100,49 +99,19 @@ export default function PresensiSantriPage() {
     ? 'bg-amber-500'
     : 'bg-rose-500';
 
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-24 lg:pb-8">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-tosca-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard/santri"
-              className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <span className="text-base font-black text-tosca-950 block tracking-tight">Presensi Kehadiran</span>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-[10px] text-tosca-500 font-extrabold uppercase tracking-wider">
-                  {settings.appName} • TA {settings.tahunAjaran}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="h-9 w-9 rounded-xl bg-tosca-600 text-white flex items-center justify-center font-bold text-sm">
-            {user ? user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('') : 'S'}
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-6 space-y-5">
-
-        {/* Ringkasan Hero Card */}
-        <div className="relative bg-gradient-to-tr from-tosca-900 to-teal-700 rounded-3xl p-6 text-white shadow-xl overflow-hidden">
+  return (<>
+    <div className="relative bg-gradient-to-tr from-tosca-900 to-tosca-700 rounded-3xl p-6 text-white shadow-xl overflow-hidden">
           <div className="absolute right-4 top-4 opacity-10">
             <CheckSquare size={100} />
           </div>
-          <p className="text-[10px] font-extrabold uppercase tracking-widest text-teal-300 mb-1">Ringkasan Kehadiran</p>
-          <h1 className="text-2xl font-black">{user ? user.fullName : 'Santri'}</h1>
-          <p className="text-xs text-teal-200 mt-0.5 font-semibold">{user ? user.nis : ''} • {myRecords[0]?.kelasNama || 'Kelas Anda'}</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-tosca-300 mb-1">Ringkasan Kehadiran</p>
+          <h1 className="text-2xl font-black">{user ? user.fullName : 'Siswa'}</h1>
+          <p className="text-xs text-tosca-200 mt-0.5 font-semibold">{user ? user.nis : ''} • {myRecords[0]?.kelasNama || 'Kelas Anda'}</p>
 
           {/* Progress Kehadiran */}
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-teal-200 font-bold">Persentase Kehadiran</span>
+              <span className="text-xs text-tosca-200 font-bold">Persentase Kehadiran</span>
               <span className="text-sm font-black text-white">{persentaseHadir}%</span>
             </div>
             <div className="w-full h-2.5 bg-white/20 rounded-full overflow-hidden">
@@ -206,7 +175,7 @@ export default function PresensiSantriPage() {
             <div className="p-10 flex flex-col items-center justify-center gap-3 text-center">
               <CalendarDays className="text-tosca-200 stroke-[1.5]" size={48} />
               <p className="text-sm font-black text-slate-400">Belum ada data presensi.</p>
-              <p className="text-xs text-slate-300 font-semibold">Data akan muncul setelah Musyrif mencatat kehadiran.</p>
+              <p className="text-xs text-slate-300 font-semibold">Data akan muncul setelah Guru mencatat kehadiran.</p>
             </div>
           ) : (
             <ul className="divide-y divide-slate-50">
@@ -246,35 +215,9 @@ export default function PresensiSantriPage() {
         <div className="flex items-start gap-2 bg-tosca-50 border border-tosca-100 rounded-2xl p-4">
           <GraduationCap className="text-tosca-500 shrink-0 mt-0.5" size={16} />
           <p className="text-[11px] text-tosca-700 font-semibold leading-relaxed">
-            Data presensi ini dicatat oleh Musyrif Anda. Jika ada ketidaksesuaian, silakan hubungi Musyrif kelas Anda.
+            Data presensi ini dicatat oleh Guru Anda. Jika ada ketidaksesuaian, silakan hubungi Guru kelas Anda.
           </p>
         </div>
-
-      </main>
-
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-tosca-100 px-3 sm:px-4 py-2 flex items-center justify-around shadow-2xl">
-        <Link href="/dashboard/santri" className="flex flex-col items-center gap-1 flex-1 text-tosca-400 hover:text-tosca-600 transition-colors">
-          <Home size={20} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Beranda</span>
-        </Link>
-        <Link href="/dashboard/santri/nilai" className="flex flex-col items-center gap-1 flex-1 text-tosca-400 hover:text-tosca-600 transition-colors">
-          <Star size={20} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Nilai</span>
-        </Link>
-        <Link href="/dashboard/santri/presensi" className="flex flex-col items-center gap-1 flex-1 text-tosca-600">
-          <CheckSquare size={20} strokeWidth={2.5} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Presensi</span>
-        </Link>
-        <Link href="/dashboard/santri/virtual-class" className="flex flex-col items-center gap-1 flex-1 text-tosca-400 hover:text-tosca-600 transition-colors">
-          <Video size={20} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Kelas Virtual</span>
-        </Link>
-        <Link href="/dashboard/santri/profil" className="flex flex-col items-center gap-1 flex-1 text-tosca-400 hover:text-tosca-600 transition-colors">
-          <User size={20} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Profil</span>
-        </Link>
-      </nav>
-    </div>
+  </>
   );
 }

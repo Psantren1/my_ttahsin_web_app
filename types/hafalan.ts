@@ -19,7 +19,7 @@ export interface Setoran {
   updated_at: string;
 }
 
-export interface HafalanRecord {
+export interface TahsinRecord {
   id: string;
   santriId: string;
   santriName: string;

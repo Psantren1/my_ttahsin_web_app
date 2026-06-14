@@ -1,66 +1,111 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { 
-  GraduationCap, 
-  ArrowLeft, 
-  Star, 
-  Home, 
-  Video, 
-  Award, 
-  User, 
-  CheckCircle2, 
-  AlertCircle 
-} from 'lucide-react';
+import { Star, AlertCircle, BookOpen, BookMarked, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 
-interface HafalanRecord {
+interface NilaiRecord {
   id: string;
-  santriId: string;
-  santriName: string;
-  kelasId: string;
-  kelasNama: string;
-  nis: string;
-  surah: string;
-  ayat: string;
-  tajwid: number;
-  makhraj: number;
-  kelancaran: number;
+  detail1: string;
+  detail2: string;
+  score1: number;
+  score2: number;
+  score3: number;
   rata: number;
-  status: 'Lanjut' | 'Ulang';
+  status: string;
   createdAt: string;
 }
 
-const defaultHafalanRecords: HafalanRecord[] = [];
+const LEVEL_API: Record<string, string> = {
+  TAHSIN: '/api/setoran',
+  BTQ_PEMULA: '/api/btq-pemula',
+  BTQ_LANJUTAN: '/api/btq-lanjutan',
+  TAHFIDZ: '/api/tahfidz',
+  MUROJAAH: '/api/murojaah',
+};
+
+const LEVEL_MAP: Record<string, (r: any) => NilaiRecord> = {
+  TAHSIN: (r) => ({
+    id: r.id,
+    detail1: r.surah || '',
+    detail2: r.ayat_start ? (r.ayat_end ? `${r.ayat_start}-${r.ayat_end}` : String(r.ayat_start)) : '',
+    score1: r.tajwid_score || 0,
+    score2: r.makhraj_score || 0,
+    score3: r.kelancaran_score || 0,
+    rata: r.rata_rata || 0,
+    status: r.status === 'LANJUT' ? 'Lanjut' : 'Ulang',
+    createdAt: r.created_at || '',
+  }),
+  BTQ_PEMULA: (r) => ({
+    id: r.id,
+    detail1: r.jilid || '',
+    detail2: String(r.halaman || ''),
+    score1: r.nilai || 0,
+    score2: 0,
+    score3: 0,
+    rata: r.nilai || 0,
+    status: '',
+    createdAt: r.created_at || '',
+  }),
+  BTQ_LANJUTAN: (r) => ({
+    id: r.id,
+    detail1: r.level || '',
+    detail2: r.juz_surah || '',
+    score1: r.nilai || 0,
+    score2: 0,
+    score3: 0,
+    rata: r.nilai || 0,
+    status: r.status_bacaan || '',
+    createdAt: r.created_at || '',
+  }),
+  TAHFIDZ: (r) => ({
+    id: r.id,
+    detail1: r.surat || '',
+    detail2: r.ayat || '',
+    score1: r.nilai || 0,
+    score2: 0,
+    score3: 0,
+    rata: r.nilai || 0,
+    status: r.status_setoran || '',
+    createdAt: r.created_at || '',
+  }),
+  MUROJAAH: (r) => ({
+    id: r.id,
+    detail1: r.surah || '',
+    detail2: r.ayat || '',
+    score1: r.nilai || 0,
+    score2: 0,
+    score3: 0,
+    rata: r.nilai || 0,
+    status: r.status_murojaah || '',
+    createdAt: r.created_at || '',
+  }),
+};
+
+const FIELD_LABELS: Record<string, { label1: string; label2: string; scores: string[]; title: string }> = {
+  TAHSIN: { label1: 'Surah', label2: 'Ayat', scores: ['Tajwid', 'Makhraj', 'Kelancaran'], title: 'Detail Nilai Tahsin Harian' },
+  BTQ_PEMULA: { label1: 'Jilid', label2: 'Halaman', scores: ['Nilai'], title: 'Detail Nilai BTQ Pemula' },
+  BTQ_LANJUTAN: { label1: 'Level', label2: 'Juz/Surah', scores: ['Nilai'], title: 'Detail Nilai BTQ Lanjutan' },
+  TAHFIDZ: { label1: 'Surat', label2: 'Ayat', scores: ['Nilai'], title: 'Detail Nilai Tahfidz' },
+  MUROJAAH: { label1: 'Surah', label2: 'Ayat', scores: ['Nilai'], title: 'Detail Nilai Murojaah' },
+};
 
 export default function NilaiSantriPage() {
   const { user } = useAuth();
-  const [riwayat, setRiwayat] = useState<HafalanRecord[]>([]);
+  const [records, setRecords] = useState<NilaiRecord[]>([]);
+
+  const level = user?.levelProgram || 'TAHSIN';
+  const apiPath = LEVEL_API[level] || LEVEL_API['TAHSIN'];
+  const mapper = LEVEL_MAP[level] || LEVEL_MAP['TAHSIN'];
+  const labels = FIELD_LABELS[level] || FIELD_LABELS['TAHSIN'];
 
   const loadRiwayat = async () => {
     if (!user) return;
-
     try {
-      const res = await fetch(`/api/setoran?santuario_id=${user.id}`);
+      const res = await fetch(`${apiPath}?santuario_id=${user.id}`);
       const data = await res.json();
-      const mapped: HafalanRecord[] = (data.data || []).map((r: any) => ({
-        id: r.id,
-        santriId: r.santuario_id,
-        santriName: r.santri_name || '',
-        kelasId: '',
-        kelasNama: '',
-        nis: r.nis || '',
-        surah: r.surah || '',
-        ayat: r.ayat_start ? (r.ayat_end ? `${r.ayat_start}-${r.ayat_end}` : String(r.ayat_start)) : '',
-        tajwid: r.tajwid_score || 0,
-        makhraj: r.makhraj_score || 0,
-        kelancaran: r.kelancaran_score || 0,
-        rata: r.rata_rata || 0,
-        status: r.status === 'LANJUT' ? 'Lanjut' as const : 'Ulang' as const,
-        createdAt: r.created_at || ''
-      }));
-      setRiwayat(mapped);
+      const mapped = (data.data || []).map(mapper);
+      setRecords(mapped);
     } catch (e) {
       console.error(e);
     }
@@ -68,129 +113,91 @@ export default function NilaiSantriPage() {
 
   useEffect(() => {
     loadRiwayat();
-
     const interval = setInterval(loadRiwayat, 2000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [user]);
+    return () => clearInterval(interval);
+  }, [user, apiPath, mapper]);
 
   return (
-    <div className="min-h-screen bg-tosca-50/30 flex flex-col pb-24 lg:pb-8">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-tosca-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/santri" className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <span className="text-base font-black text-tosca-900 block">Laporan Nilai</span>
-              <span className="text-[10px] text-tosca-500 font-medium">Riwayat setoran hafalan Anda</span>
+    <>
+      <div className="bg-tosca-50 border border-tosca-100 rounded-2xl p-4 flex items-center gap-3">
+        <Star className="text-amber-500 shrink-0" size={20} />
+        <p className="text-sm text-tosca-700 font-bold leading-relaxed">
+          Berikut adalah detail rekaman nilai {level.replace('_', ' ').toLowerCase()} Anda secara real-time.
+        </p>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-tosca-50 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-tosca-50 bg-tosca-50/10 flex items-center justify-between">
+          <h3 className="text-sm font-black text-tosca-900 flex items-center gap-2">
+            <Star className="text-amber-500" size={18} /> {labels.title}
+          </h3>
+        </div>
+        {records.length === 0 ? (
+          <div className="py-12 text-center text-slate-400 font-bold">
+            <div className="flex flex-col items-center justify-center space-y-2">
+              <AlertCircle size={32} className="text-tosca-300 stroke-[1.5]" />
+              <p className="text-sm">Belum ada riwayat nilai yang diunggah oleh Guru.</p>
             </div>
           </div>
-          <div className="h-9 w-9 rounded-xl bg-tosca-600 text-white flex items-center justify-center font-bold text-sm">
-            {user ? user.fullName.split(' ').map(n => n.charAt(0)).slice(0, 2).join('') : 'AF'}
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Info */}
-        <div className="bg-tosca-50 border border-tosca-100 rounded-2xl p-4 flex items-center gap-3">
-          <Star className="text-amber-500 shrink-0" size={20} />
-          <p className="text-sm text-tosca-700 font-bold leading-relaxed">
-            Berikut adalah detail rekaman nilai dan ulasan status kelulusan bimbingan setoran hafalan Anda secara real-time.
-          </p>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-3xl border border-tosca-50 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-tosca-50 bg-tosca-50/10 flex items-center justify-between">
-            <h3 className="text-sm font-black text-tosca-900 flex items-center gap-2">
-              <Star className="text-amber-500" size={18} /> Detail Nilai Hafalan Harian
-            </h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-tosca-50/40 border-b border-tosca-100 text-[9px] font-black text-tosca-400 uppercase tracking-widest">
-                  <th className="py-4 px-4 text-center">Tanggal</th>
-                  <th className="py-4 px-4">Surah</th>
-                  <th className="py-4 px-4 text-center">Rentang Ayat</th>
-                  <th className="py-4 px-4 text-center">Tajwid</th>
-                  <th className="py-4 px-4 text-center">Makhraj</th>
-                  <th className="py-4 px-4 text-center">Kelancaran</th>
-                  <th className="py-4 px-4 text-center">Rata-Rata</th>
-                  <th className="py-4 px-4 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-tosca-50 text-xs text-tosca-800">
-                {riwayat.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400 font-bold">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <AlertCircle size={32} className="text-tosca-300 stroke-[1.5]" />
-                        <p className="text-sm">Belum ada riwayat setoran hafalan yang diunggah oleh Musyrif.</p>
+        ) : (
+          <div className="divide-y divide-tosca-50">
+            {records.map((r) => {
+              const showScoreGrid = level === 'TAHSIN';
+              return (
+                <div key={r.id} className="p-5 space-y-3 hover:bg-tosca-50/20 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <BookMarked className="h-4 w-4 text-tosca-500" />
+                        <span className="font-bold text-tosca-900">{r.detail1}</span>
+                        {r.detail2 && <span className="text-tosca-400 text-sm">{labels.label2} {r.detail2}</span>}
                       </div>
-                    </td>
-                  </tr>
-                ) : (
-                  riwayat.map(r => (
-                    <tr key={r.id} className="hover:bg-tosca-50/20 transition-all">
-                      <td className="py-3.5 px-4 text-center font-semibold text-slate-500">{r.createdAt}</td>
-                      <td className="py-3.5 px-4 font-black text-slate-800">Surah {r.surah}</td>
-                      <td className="py-3.5 px-4 text-center font-bold text-slate-600">Ayat {r.ayat}</td>
-                      <td className="py-3.5 px-4 text-center font-black text-slate-700">{r.tajwid}</td>
-                      <td className="py-3.5 px-4 text-center font-black text-slate-700">{r.makhraj}</td>
-                      <td className="py-3.5 px-4 text-center font-black text-slate-700">{r.kelancaran}</td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="px-2.5 py-0.5 bg-tosca-900 text-white rounded text-[10px] font-black tracking-tight">
-                          {r.rata.toFixed(1)}
+                      <div className="flex items-center gap-2 text-xs text-tosca-400">
+                        {r.status && (
+                          <span className={`px-2 py-0.5 rounded-full border font-semibold ${
+                            r.status === 'Lanjut' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            r.status === 'Ulang' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            'bg-tosca-50 text-tosca-600 border-tosca-200'
+                          }`}>
+                            {r.status === 'Lanjut' ? <CheckCircle2 className="h-3 w-3 inline mr-0.5" /> :
+                             r.status === 'Ulang' ? <AlertCircle className="h-3 w-3 inline mr-0.5" /> : null}
+                            {r.status}
+                          </span>
+                        )}
+                        <span>
+                          {r.createdAt
+                            ? new Date(r.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : ''}
                         </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm inline-block ${
-                          r.status === 'Lanjut' 
-                            ? 'bg-green-500 text-white border border-green-400' 
-                            : 'bg-red-500 text-white border border-red-400'
-                        }`}>
-                          {r.status === 'Lanjut' ? 'Lanjut' : 'Ulang'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-tosca-700">{r.rata}</p>
+                      <p className="text-[10px] text-tosca-400 font-semibold">NILAI</p>
+                    </div>
+                  </div>
+                  {showScoreGrid && (
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-tosca-50 rounded-xl py-2">
+                        <p className="text-xs text-tosca-400 font-medium">Tajwid</p>
+                        <p className="text-sm font-bold text-tosca-700">{r.score1}</p>
+                      </div>
+                      <div className="bg-tosca-50 rounded-xl py-2">
+                        <p className="text-xs text-tosca-400 font-medium">Makhraj</p>
+                        <p className="text-sm font-bold text-tosca-700">{r.score2}</p>
+                      </div>
+                      <div className="bg-tosca-50 rounded-xl py-2">
+                        <p className="text-xs text-tosca-400 font-medium">Kelancaran</p>
+                        <p className="text-sm font-bold text-tosca-700">{r.score3}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </div>
-      </main>
-
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-tosca-100 px-3 sm:px-4 py-2 flex items-center justify-around shadow-2xl">
-        <Link href="/dashboard/santri" className="flex flex-col items-center gap-1 flex-1 text-tosca-400 hover:text-tosca-600 transition-colors">
-          <Home size={20} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Beranda</span>
-        </Link>
-        <Link href="/dashboard/santri/nilai" className="flex flex-col items-center gap-1 flex-1 text-tosca-600">
-          <Star size={20} strokeWidth={2.5} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Nilai</span>
-        </Link>
-        <Link href="/dashboard/santri/virtual-class" className="flex flex-col items-center gap-1 flex-1 text-tosca-400 hover:text-tosca-600 transition-colors">
-          <Video size={20} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Kelas Virtual</span>
-        </Link>
-        <Link href="/dashboard/santri/sertifikat" className="flex flex-col items-center gap-1 flex-1 text-tosca-400 hover:text-tosca-600 transition-colors">
-          <Award size={20} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Sertifikat</span>
-        </Link>
-        <Link href="/dashboard/santri/profil" className="flex flex-col items-center gap-1 flex-1 text-tosca-400 hover:text-tosca-600 transition-colors">
-          <User size={20} />
-          <span className="text-[9px] font-extrabold hidden sm:inline">Profil</span>
-        </Link>
-      </nav>
-    </div>
+        )}
+      </div>
+    </>
   );
 }

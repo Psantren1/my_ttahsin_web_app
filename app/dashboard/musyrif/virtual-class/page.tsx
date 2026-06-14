@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   GraduationCap, 
@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { useSettings } from '@/lib/hooks/useSettings';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useZoomMeetingsList, useCreateZoomMeeting } from '@/lib/hooks/useApi';
+import { useQueryClient } from '@tanstack/react-query';
+import { apiKeys } from '@/lib/hooks/useApi';
 
 export interface VirtualMeeting {
   id: string;
@@ -30,7 +33,10 @@ export interface VirtualMeeting {
 export default function VirtualClassMusyrifPage() {
   const { settings } = useSettings();
   const { user } = useAuth();
-  const [meetings, setMeetings] = useState<VirtualMeeting[]>([]);
+  const { data: meetingsData } = useZoomMeetingsList();
+  const createMeeting = useCreateZoomMeeting();
+  const queryClient = useQueryClient();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
@@ -40,75 +46,35 @@ export default function VirtualClassMusyrifPage() {
   const [youtubeLink, setYoutubeLink] = useState('');
   const [zoomLink, setZoomLink] = useState('');
 
-  // Load meetings from API on mount
-  useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const res = await fetch('/api/zoom-meetings');
-        if (res.ok) {
-          const data = await res.json();
-          const mapped = (data.data || []).map((m: any) => {
-            let parsedDesc = { googleDriveLink: '', youtubeLink: '' };
-            if (m.description) {
-              try { parsedDesc = JSON.parse(m.description); } catch (e) { /* ignore */ }
-            }
-            return {
-              id: m.id,
-              namaPertemuan: m.topic || '',
-              googleDriveLink: parsedDesc.googleDriveLink || '',
-              youtubeLink: parsedDesc.youtubeLink || '',
-              zoomLink: m.link || '',
-              createdAt: m.meeting_date ? new Date(m.meeting_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
-            };
-          });
-          setMeetings(mapped);
-        }
-      } catch (e) {
-        console.error('Error fetching meetings', e);
-      }
+  const meetings: VirtualMeeting[] = (meetingsData?.data || []).map((m: any) => {
+    let parsedDesc = { googleDriveLink: '', youtubeLink: '' };
+    if (m.description) {
+      try { parsedDesc = JSON.parse(m.description); } catch (e) { /* ignore */ }
+    }
+    return {
+      id: m.id,
+      namaPertemuan: m.topic || '',
+      googleDriveLink: parsedDesc.googleDriveLink || '',
+      youtubeLink: parsedDesc.youtubeLink || '',
+      zoomLink: m.link || '',
+      createdAt: m.meeting_date ? new Date(m.meeting_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
     };
-    fetchMeetings();
-  }, []);
+  });
 
   const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const res = await fetch('/api/zoom-meetings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          musyrif_id: user?.id || '',
-          topic: namaPertemuan,
-          description: JSON.stringify({ googleDriveLink, youtubeLink }),
-          meeting_date: new Date().toISOString().split('T')[0],
-          meeting_time: new Date().toTimeString().slice(0, 5),
-          duration: 60,
-          link: zoomLink,
-          host_name: user?.fullName || ''
-        })
+      await createMeeting.mutateAsync({
+        musyrif_id: user?.id || '',
+        topic: namaPertemuan,
+        description: JSON.stringify({ googleDriveLink, youtubeLink }),
+        meeting_date: new Date().toISOString().split('T')[0],
+        meeting_time: new Date().toTimeString().slice(0, 5),
+        duration: 60,
+        link: zoomLink,
+        host_name: user?.fullName || ''
       });
-      if (!res.ok) throw new Error('Failed to create meeting');
-      
-      const fetchRes = await fetch('/api/zoom-meetings');
-      if (fetchRes.ok) {
-        const fetchData = await fetchRes.json();
-        const mapped = (fetchData.data || []).map((m: any) => {
-          let parsedDesc = { googleDriveLink: '', youtubeLink: '' };
-          if (m.description) {
-            try { parsedDesc = JSON.parse(m.description); } catch (e) { /* ignore */ }
-          }
-          return {
-            id: m.id,
-            namaPertemuan: m.topic || '',
-            googleDriveLink: parsedDesc.googleDriveLink || '',
-            youtubeLink: parsedDesc.youtubeLink || '',
-            zoomLink: m.link || '',
-            createdAt: m.meeting_date ? new Date(m.meeting_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
-          };
-        });
-        setMeetings(mapped);
-      }
     } catch (e) {
       console.error('Error creating meeting', e);
     }
@@ -128,7 +94,7 @@ export default function VirtualClassMusyrifPage() {
     if (confirm('Apakah Anda yakin ingin menghapus pertemuan ini?')) {
       try {
         await fetch(`/api/zoom-meetings/${id}`, { method: 'DELETE' });
-        setMeetings(prev => prev.filter(m => m.id !== id));
+        queryClient.invalidateQueries({ queryKey: apiKeys.zoom.all });
       } catch (e) {
         console.error('Error deleting meeting', e);
       }
@@ -136,34 +102,7 @@ export default function VirtualClassMusyrifPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-24 lg:pb-8">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-tosca-100/50 shadow-sm backdrop-blur-md bg-white/95">
-        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/musyrif" className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors cursor-pointer">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <span className="text-base font-black text-tosca-950 block tracking-tight">Kelas Virtual</span>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-[10px] text-tosca-500 font-extrabold uppercase tracking-wider">{settings.appName} • TA {settings.tahunAjaran}</span>
-              </div>
-            </div>
-          </div>
-          
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-tosca-600 to-teal-500 text-white px-4 py-2.5 rounded-2xl font-bold shadow-md shadow-tosca-200 hover:shadow-lg active:scale-95 transition-all text-sm cursor-pointer"
-          >
-            <Plus size={18} />
-            Tambah Pertemuan
-          </button>
-        </div>
-      </header>
-
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-6 space-y-6">
+    <>
         {/* Toast */}
         {showToast && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-green-500 text-white px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4">
@@ -173,13 +112,13 @@ export default function VirtualClassMusyrifPage() {
         )}
 
         {/* Hero Card */}
-        <div className="bg-gradient-to-tr from-tosca-900 to-teal-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[120px]">
+        <div className="bg-gradient-to-tr from-tosca-900 to-tosca-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[120px]">
           <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none hidden md:block">
             <Video size={100} />
           </div>
           <div className="space-y-1">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">Manajemen Kelas Virtual</h1>
-            <p className="text-xs text-teal-100 font-medium leading-relaxed max-w-xl">
+            <p className="text-xs text-tosca-100 font-medium leading-relaxed max-w-xl">
               Unggah materi bimbingan Google Drive, bagikan rekaman bimbingan YouTube, atau jadwalkan tatap muka online via Zoom untuk santri halaqah Anda.
             </p>
           </div>
@@ -236,7 +175,7 @@ export default function VirtualClassMusyrifPage() {
                         </span>
                       )}
                       {meeting.zoomLink && (
-                        <span className="px-2.5 py-1 bg-teal-50 text-teal-600 rounded-full text-[10px] font-bold flex items-center gap-1.5 border border-teal-100">
+                        <span className="px-2.5 py-1 bg-tosca-50 text-tosca-600 rounded-full text-[10px] font-bold flex items-center gap-1.5 border border-tosca-100">
                           <Video size={12} />
                           Rapat Zoom
                         </span>
@@ -259,15 +198,13 @@ export default function VirtualClassMusyrifPage() {
             </div>
           )}
         </div>
-      </main>
-
       {/* Modal Dialog Tambah Pertemuan */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-tosca-50/20">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-tr from-tosca-600 to-teal-400 text-white rounded-xl shadow-md">
+                <div className="p-2.5 bg-gradient-to-tr from-tosca-600 to-tosca-400 text-white rounded-xl shadow-md">
                   <Video size={20} />
                 </div>
                 <h2 className="text-xl font-bold text-tosca-950">Tambah Pertemuan Baru</h2>
@@ -336,7 +273,7 @@ export default function VirtualClassMusyrifPage() {
                 </button>
                 <button 
                   type="submit" 
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-tosca-600 to-teal-500 text-white rounded-2xl font-bold hover:from-tosca-700 hover:to-teal-600 transition-all shadow-md shadow-tosca-100 cursor-pointer"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-tosca-600 to-tosca-500 text-white rounded-2xl font-bold hover:from-tosca-700 hover:to-tosca-600 transition-all shadow-md shadow-tosca-100 cursor-pointer"
                 >
                   Simpan Pertemuan
                 </button>
@@ -345,6 +282,6 @@ export default function VirtualClassMusyrifPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

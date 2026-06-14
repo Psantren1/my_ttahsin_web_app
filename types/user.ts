@@ -12,7 +12,7 @@ export interface User {
 export interface Santri extends User {
   nis: string;
   kelas: string;
-  target_hafalan: number; // in juz or pages
+  target_Tahsin: number; // in juz or pages
 }
 
 export interface Musyrif extends User {

@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import Sidebar from '@/components/ui/sidebar';
-import Navbar from '@/components/ui/navbar';
 import {
   FileDown,
   Upload,
@@ -39,6 +37,7 @@ interface Santri {
   password: string;
   is_active: boolean;
   created_at: string;
+  level_program: string;
 }
 
 // Initial dummy data
@@ -46,6 +45,20 @@ const initialSantri: Santri[] = [];
 
 // Initial accounts for login (separate from display data)
 const initialAccounts: any[] = [];
+
+// Level mapping
+const levelLabels: Record<number, string> = {
+  7: 'BTQ Pemula',
+  8: 'BTQ Lanjutan',
+  9: 'Tahsin',
+  10: 'Tahfidz',
+  11: 'Murojaah',
+  12: 'Tahfidz',
+};
+
+function getLevelLabel(level: number): string {
+  return levelLabels[level] || `Level ${level}`;
+}
 
 // Simple hash function for demo
 function simpleHash(str: string): string {
@@ -59,7 +72,7 @@ function simpleHash(str: string): string {
 }
 
 export default function ManajemenSantri() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -83,6 +96,7 @@ export default function ManajemenSantri() {
     no_wa: '',
     username: '',
     password: '',
+    level_program: 'TAHSIN',
   });
   const [formLevel, setFormLevel] = useState('7');
 
@@ -109,7 +123,7 @@ export default function ManajemenSantri() {
           kelas_id: s.kelas_id || '',
           kelas_nama: s.kelas_nama || '',
           is_active: s.is_active,
-          target_hafalan: s.target_hafalan ?? 30,
+          target_Tahsin: s.target_Tahsin ?? 30,
           nama_ayah: s.nama_ayah || '',
           nama_ibu: s.nama_ibu || '',
           pekerjaan_ayah: s.pekerjaan_ayah || '',
@@ -165,6 +179,7 @@ export default function ManajemenSantri() {
       no_wa: '',
       username: '',
       password: '',
+      level_program: 'TAHSIN',
     });
     setShowPassword(false);
     setEditingSantri(null);
@@ -197,7 +212,8 @@ export default function ManajemenSantri() {
       pekerjaan_ibu: santri.pekerjaan_ibu,
       no_wa: santri.no_wa,
       username: santri.username,
-      password: '', // Tidak tampilkan password lama
+      password: '',
+      level_program: santri.level_program || 'TAHSIN',
     });
     setIsModalOpen(true);
   };
@@ -214,12 +230,21 @@ export default function ManajemenSantri() {
     });
   };
 
+  async function apiFetch(url: string, options: RequestInit): Promise<Response> {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Gagal menyimpan data');
+    }
+    return res;
+  }
+
   const handleSave = async () => {
     setIsLoading(true);
 
     try {
       if (isEditMode && editingSantri) {
-        const res = await fetch(`/api/santri/${editingSantri.id}`, {
+        await apiFetch(`/api/santri/${editingSantri.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -233,13 +258,13 @@ export default function ManajemenSantri() {
             nama_ibu: formData.nama_ibu,
             pekerjaan_ayah: formData.pekerjaan_ayah,
             pekerjaan_ibu: formData.pekerjaan_ibu,
+            level_program: formData.level_program,
             ...(formData.password ? { password: formData.password } : {}),
           }),
         });
-        if (!res.ok) throw new Error('Failed to update');
-        triggerToast('Data Santri Berhasil Diperbarui!');
+        triggerToast('Data Siswa Berhasil Diperbarui!');
       } else {
-        const res = await fetch('/api/santri', {
+        await apiFetch('/api/santri', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -255,16 +280,16 @@ export default function ManajemenSantri() {
             nama_ibu: formData.nama_ibu,
             pekerjaan_ayah: formData.pekerjaan_ayah,
             pekerjaan_ibu: formData.pekerjaan_ibu,
+            level_program: formData.level_program,
           }),
         });
-        if (!res.ok) throw new Error('Failed to create');
-        triggerToast(`Santri "${formData.nama_lengkap}" berhasil ditambahkan!`);
+        triggerToast(`Siswa "${formData.nama_lengkap}" berhasil ditambahkan!`);
       }
 
       await loadData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save failed', err);
-      triggerToast('Gagal menyimpan data santri.');
+      triggerToast(err.message || 'Gagal menyimpan data siswa.');
     }
 
     setIsLoading(false);
@@ -273,15 +298,15 @@ export default function ManajemenSantri() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus data santri ini?')) {
+    if (confirm('Apakah Anda yakin ingin menghapus data siswa ini?')) {
       try {
         const res = await fetch(`/api/santri/${id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Failed to delete');
-        triggerToast('Data Santri Berhasil Dihapus!');
+        triggerToast('Data Siswa Berhasil Dihapus!');
         await loadData();
       } catch (err) {
         console.error('Delete failed', err);
-        triggerToast('Gagal menghapus data santri.');
+        triggerToast('Gagal menghapus data siswa.');
       }
     }
   };
@@ -297,7 +322,7 @@ export default function ManajemenSantri() {
 
   // Download template CSV
   const downloadTemplate = () => {
-    const headers = ['NIS', 'NISN', 'Nama Lengkap', 'Kelas ID', 'Nama Ayah', 'Nama Ibu', 'Pekerjaan Ayah', 'Pekerjaan Ibu', 'No WA', 'Username'];
+    const headers = ['NIS', 'NISN', 'Nama Siswa', 'Kelas ID', 'Nama Ayah', 'Nama Ibu', 'Pekerjaan Ayah', 'Pekerjaan Ibu', 'No WA', 'Username'];
     const csvContent = "data:text/csv;charset=utf-8," + headers.join(",");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -314,7 +339,7 @@ export default function ManajemenSantri() {
     if (file) {
       triggerToast(`File "${file.name}" berhasil diupload. Data sedang diproses...`);
       setTimeout(() => {
-        triggerToast('Data Santri Berhasil Diimpor!');
+        triggerToast('Data Siswa Berhasil Diimpor!');
       }, 1500);
     }
   };
@@ -325,22 +350,17 @@ export default function ManajemenSantri() {
   };
 
   return (
-    <div className="min-h-screen bg-tosca-50/30">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
-      <div className="lg:pl-72 transition-all duration-300">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+    <>
+      <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {/* Header Card */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-tosca-50 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-surface-100 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-tosca-100 rounded-2xl">
                 <Users size={28} className="text-tosca-600" />
               </div>
               <div className="space-y-1">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-tosca-900">Manajemen Santri</h1>
-                <p className="text-tosca-600 font-medium">Kelola data & akun login santri Baitul Huffaz.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900">Manajemen Siswa</h1>
+                <p className="text-tosca-600 font-medium">Kelola data & akun login siswa Baitul Huffaz.</p>
               </div>
             </div>
             {showToast && (
@@ -359,13 +379,13 @@ export default function ManajemenSantri() {
             <div>
               <p className="text-sm font-bold text-tosca-800">Informasi Penting</p>
               <p className="text-xs text-tosca-600 mt-1">
-                Santri yang didaftarkan akan otomatis memiliki akun login. Username dan password default akan digenerate secara otomatis dan bisa diubah kemudian.
+                Siswa yang didaftarkan akan otomatis memiliki akun login. Username dan password default akan digenerate secara otomatis dan bisa diubah kemudian.
               </p>
             </div>
           </div>
 
           {/* Action Bar */}
-          <div className="bg-white p-4 rounded-3xl border border-tosca-50 shadow-sm mb-6">
+          <div className="bg-white p-4 rounded-3xl border border-surface-100 shadow-sm mb-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -393,13 +413,13 @@ export default function ManajemenSantri() {
 
               <div className="flex items-center gap-3">
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-tosca-400">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
                     <Search size={18} />
                   </div>
                   <input
                     type="text"
                     placeholder="Cari NIS, Nama, Username..."
-                    className="pl-10 pr-4 py-2 bg-tosca-50/50 border border-tosca-100 rounded-xl text-sm text-[#0B7D72] focus:ring-2 focus:ring-tosca-500 focus:border-tosca-500 transition-all w-full sm:w-64"
+                    className="pl-10 pr-4 py-2 bg-tosca-50/50 border border-tosca-100 rounded-xl text-sm text-[#0B7D72] focus:ring-2 focus:ring-tosca-500 focus:border-surface-1000 transition-all w-full sm:w-64"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -409,14 +429,14 @@ export default function ManajemenSantri() {
                   className="flex items-center gap-2 px-4 py-2 bg-tosca-900 text-white rounded-xl font-semibold text-sm hover:bg-black transition-all shadow-md"
                 >
                   <Plus size={18} />
-                  <span className="hidden sm:inline">Tambah Santri</span>
+                  <span className="hidden sm:inline">Tambah Siswa</span>
                 </button>
               </div>
             </div>
           </div>
 
           {/* Table Section */}
-          <div className="bg-white rounded-3xl border border-tosca-50 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl border border-surface-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -424,7 +444,7 @@ export default function ManajemenSantri() {
                     <th className="px-4 py-3 text-[10px] font-bold text-tosca-700 uppercase tracking-wider">No</th>
                     <th className="px-4 py-3 text-[10px] font-bold text-tosca-700 uppercase tracking-wider">NIS</th>
                     <th className="px-4 py-3 text-[10px] font-bold text-tosca-700 uppercase tracking-wider">NISN</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-tosca-700 uppercase tracking-wider">Nama Lengkap</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-tosca-700 uppercase tracking-wider">Nama Siswa</th>
                     <th className="px-4 py-3 text-[10px] font-bold text-tosca-700 uppercase tracking-wider">Kelas</th>
                     <th className="px-4 py-3 text-[10px] font-bold text-tosca-700 uppercase tracking-wider">Level</th>
                     <th className="px-4 py-3 text-[10px] font-bold text-tosca-700 uppercase tracking-wider">Nama Ayah</th>
@@ -439,7 +459,7 @@ export default function ManajemenSantri() {
                 </thead>
                 <tbody className="divide-y divide-tosca-50">
                   {santriList.map((santri, index) => (
-                    <tr key={santri.id} className="hover:bg-tosca-50/30 transition-colors group">
+                    <tr key={santri.id} className="hover:bg-surface-50 transition-colors group">
                       <td className="px-4 py-3 text-sm font-medium text-tosca-500">{index + 1}</td>
                       <td className="px-4 py-3 text-sm font-medium text-tosca-800">{santri.nis}</td>
                       <td className="px-4 py-3 text-sm text-tosca-600">{santri.nisn}</td>
@@ -451,7 +471,7 @@ export default function ManajemenSantri() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-[10px] font-bold">
-                          Level {santri.kelas_level}
+                          {getLevelLabel(santri.kelas_level)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-tosca-600">{santri.nama_ayah}</td>
@@ -491,7 +511,7 @@ export default function ManajemenSantri() {
                           >
                             <Trash2 size={16} />
                           </button>
-                          <button className="p-1.5 text-tosca-400 hover:bg-tosca-50 rounded-lg">
+                          <button className="p-1.5 text-surface-400 hover:bg-tosca-50 rounded-lg">
                             <MoreVertical size={16} />
                           </button>
                         </div>
@@ -503,8 +523,8 @@ export default function ManajemenSantri() {
             </div>
 
             {/* Pagination */}
-            <div className="px-6 py-4 bg-tosca-50/20 border-t border-tosca-50 flex items-center justify-between text-sm text-tosca-500 font-medium">
-              <p>Menampilkan {santriList.length} dari {santriList.length} santri</p>
+            <div className="px-6 py-4 bg-tosca-50/20 border-t border-surface-100 flex items-center justify-between text-sm text-tosca-500 font-medium">
+              <p>Menampilkan {santriList.length} dari {santriList.length} siswa</p>
               <div className="flex gap-2">
                 <button className="px-3 py-1.5 border border-tosca-100 rounded-lg hover:bg-white transition-colors disabled:opacity-50" disabled>Sebelumnya</button>
                 <button className="px-3 py-1.5 border border-tosca-100 rounded-lg hover:bg-white transition-colors bg-tosca-50">1</button>
@@ -515,22 +535,21 @@ export default function ManajemenSantri() {
             </div>
           </div>
         </main>
-      </div>
 
-      {/* Modal Tambah/Edit Santri */}
+      {/* Modal Tambah/Edit Siswa */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 my-8">
-            <div className="flex items-center justify-between p-6 border-b border-tosca-50 bg-tosca-50/20">
+            <div className="flex items-center justify-between p-6 border-b border-surface-100 bg-tosca-50/20">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-tosca-600 rounded-xl text-white">
                   <UserPlus size={20} />
                 </div>
                 <h2 className="text-xl font-bold text-tosca-900">
-                  {isEditMode ? 'Edit Data Santri' : 'Tambah Santri Baru'}
+                  {isEditMode ? 'Edit Data Siswa' : 'Tambah Siswa Baru'}
                 </h2>
               </div>
-              <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="text-tosca-400 hover:text-tosca-600 transition-colors">
+              <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="text-surface-400 hover:text-tosca-600 transition-colors">
                 <X size={24} />
               </button>
             </div>
@@ -566,7 +585,7 @@ export default function ManajemenSantri() {
 
               {/* Nama Lengkap */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-tosca-700 ml-1">Nama Lengkap</label>
+                  <label className="text-xs font-bold text-tosca-700 ml-1">Nama Siswa</label>
                 <input
                   type="text"
                   name="nama_lengkap"
@@ -603,7 +622,7 @@ export default function ManajemenSantri() {
                     className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
                   >
                     {[7, 8, 9, 10, 11, 12].map(l => (
-                      <option key={l} value={l}>Level {l}</option>
+                      <option key={l} value={l}>{getLevelLabel(l)}</option>
                     ))}
                   </select>
                 </div>
@@ -665,6 +684,23 @@ export default function ManajemenSantri() {
                 </div>
               </div>
 
+              {/* Level Program */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-tosca-700 ml-1">Level Program</label>
+                <select
+                  name="level_program"
+                  value={formData.level_program}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
+                >
+                  <option value="BTQ_PEMULA">BTQ Pemula (BTQ1)</option>
+                  <option value="BTQ_LANJUTAN">BTQ Lanjutan (BTQ2)</option>
+                  <option value="TAHSIN">Tahsin</option>
+                  <option value="TAHFIDZ">Tahfidz</option>
+                  <option value="MUROJAAH">Murojaah</option>
+                </select>
+              </div>
+
               {/* Nomor WA */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-tosca-700 ml-1">Nomor WhatsApp</label>
@@ -681,7 +717,7 @@ export default function ManajemenSantri() {
 
               {/* Info Akun Login */}
               <div className="bg-tosca-50/50 rounded-2xl p-4 border border-tosca-100">
-                <p className="text-xs font-bold text-tosca-700 mb-3">AKUN LOGIN SANTRI</p>
+                <p className="text-xs font-bold text-tosca-700 mb-3">AKUN LOGIN SISWA</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-tosca-700 ml-1">Username</label>
@@ -710,7 +746,7 @@ export default function ManajemenSantri() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-tosca-400 hover:text-tosca-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-tosca-600"
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -747,7 +783,7 @@ export default function ManajemenSantri() {
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      {isEditMode ? 'Simpan Perubahan' : 'Simpan Santri'}
+                      {isEditMode ? 'Simpan Perubahan' : 'Simpan Siswa'}
                     </>
                   )}
                 </button>
@@ -756,6 +792,6 @@ export default function ManajemenSantri() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

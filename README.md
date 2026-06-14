@@ -1,6 +1,6 @@
-# Baitul Huffaz
+# my_ttahsin_web_app
 
-Sistem Manajemen Lembaga Tahfizh Al-Qur'an Baitul Huffaz
+Sistem Manajemen Lembaga Tahfizh Al-Qur'an
 
 ## Teknologi
 
@@ -18,20 +18,20 @@ Sistem Manajemen Lembaga Tahfizh Al-Qur'an Baitul Huffaz
 - Manajemen Musyrif/Ustadz
 - Manajemen Kelas/Halaqah
 - Manajemen Jadwal
-- Input & Review Nilai Hafalan
+- Input & Review Nilai Tahsin
 - Generate Raport
 - Generate Sertifikat
 
 ### Dashboard Musyrif
-- Input Setoran Hafalan
+- Input Setoran Tahsin
 - Input Penilaian (Tajwid, Makhraj, Kelancaran)
 - Input Kehadiran
 - Input Evaluasi Sikap
-- Update Target Hafalan
+- Update Target Tahsin
 - Download Sertifikat
 
 ### Dashboard Santri
-- Lihat Nilai Hafalan
+- Lihat Nilai Tahsin
 - Lihat Raport
 - Lihat Progress Target
 - Akses Zoom Link
@@ -42,7 +42,7 @@ Sistem Manajemen Lembaga Tahfizh Al-Qur'an Baitul Huffaz
 ```bash
 # Clone repository
 git clone <repo-url>
-cd baitul-huffaz
+cd my_ttahsin_web_app
 
 # Install dependencies
 npm install
@@ -108,13 +108,13 @@ DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 ```
 users          - Data user (admin, musyrif, santri)
 kelas          - Data kelas/halaqah
-setoran        - Record setoran hafalan
+setoran        - Record setoran Tahsin
 jadwal         - Jadwal kegiatan
 absensi        - Kehadiran harian
 evaluasi       - Evaluasi sikap/adab
-target_hafalan - Target hafalan per santri
+target_Tahsin - Target Tahsin per santri
 sertifikat     - Data sertifikat
-raport         - Raport hafalan
+raport         - Raport Tahsin
 zoom_meetings  - Data meeting zoom
 ```
 

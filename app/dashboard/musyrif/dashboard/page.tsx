@@ -16,30 +16,11 @@ export default function MusyrifDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-24 lg:pb-8">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-tosca-100/50 shadow-sm backdrop-blur-md bg-white/95">
-        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/musyrif" className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <span className="text-base font-black text-tosca-950 block tracking-tight">Dashboard</span>
-              <span className="text-[10px] text-tosca-500 font-medium">Overview Halaqah</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-tosca-600 text-white flex items-center justify-center font-bold text-sm">UM</div>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <>
         {/* Notification */}
         {notification && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slate-900/95 backdrop-blur text-white px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4">
-            <CheckCircle2 className="text-teal-400" size={18} />
+            <CheckCircle2 className="text-tosca-400" size={18} />
             <span className="text-xs font-extrabold">{notification}</span>
           </div>
         )}
@@ -48,10 +29,10 @@ export default function MusyrifDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-              <Users size={12} className="text-tosca-600" /> Santri Aktif
+              <Users size={12} className="text-tosca-600" /> Siswa Aktif
             </span>
-            <p className="text-2xl font-black text-slate-900 mt-2">{initialSantri.length} Santri</p>
-            <span className="text-[9px] text-teal-600 font-bold bg-teal-50 px-2 py-0.5 rounded w-fit mt-3">Halaqah A</span>
+            <p className="text-2xl font-black text-slate-900 mt-2">{initialSantri.length} Siswa</p>
+            <span className="text-[9px] text-tosca-600 font-bold bg-tosca-50 px-2 py-0.5 rounded w-fit mt-3">Halaqah A</span>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
@@ -120,31 +101,6 @@ export default function MusyrifDashboardPage() {
             ))}
           </div>
         </div>
-      </main>
-
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-100 px-3 sm:px-6 py-2.5 flex items-center justify-around shadow-2xl">
-        <Link href="/dashboard/musyrif" className="flex flex-col items-center justify-center gap-1 flex-1 text-tosca-600">
-          <Home size={20} strokeWidth={2.5} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Utama</span>
-        </Link>
-        <Link href="/dashboard/musyrif/setoran" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <BookOpen size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Setoran</span>
-        </Link>
-        <Link href="/dashboard/musyrif/nilai" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <span className="text-base">★</span>
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Nilai</span>
-        </Link>
-        <Link href="/dashboard/musyrif/presensi" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <span className="text-base">☑</span>
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Presensi</span>
-        </Link>
-        <Link href="/dashboard/musyrif/profil" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <span className="text-base">👤</span>
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Profil</span>
-        </Link>
-      </nav>
-    </div>
+    </>
   );
 }

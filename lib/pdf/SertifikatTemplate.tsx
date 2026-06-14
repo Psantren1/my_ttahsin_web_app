@@ -2,7 +2,7 @@
  * SertifikatTemplate.tsx
  * Template PDF 2 halaman untuk Sertifikat Tahfizh Al-Quran
  * Halaman 1: Sertifikat Utama (Kop + Isi + Identitas Santri)
- * Halaman 2: Lampiran Nilai Hafalan (Tabel + TTD)
+ * Halaman 2: Lampiran Nilai Tahsin (Tabel + TTD)
  *
  * PENTING: Komponen ini wajib di-import secara dynamic dengan { ssr: false }
  * karena @react-pdf/renderer hanya berjalan di sisi client (browser).
@@ -28,13 +28,13 @@ export interface SertifikatData {
   nis: string;
   kelasNama: string;
 
-  // Data Hafalan (dari baitul_target_records)
+  // Data Tahsin (dari baitul_target_records)
   namaSurat: string;
   juzKe: string;
   statusKelulusan: string;
   catatan?: string;
 
-  // Nilai (dari baitul_hafalan_records)
+  // Nilai (dari baitul_Tahsin_records)
   nilaiTajwid: number;
   nilaiMakhraj: number;
   nilaiKelancaran: number;
@@ -54,8 +54,8 @@ export interface SertifikatData {
 
 // ─── Warna & Gaya ───────────────────────────────────────────────────────────
 
-const TOSCA   = '#0d9488'; // teal-600
-const TOSCA_D = '#0f766e'; // teal-700
+const TOSCA   = '#006a4e'; // bottle-green-600
+const TOSCA_D = '#00553e'; // bottle-green-700
 const GOLD    = '#b45309'; // amber-700
 const DARK    = '#1e293b'; // slate-800
 const GRAY    = '#64748b'; // slate-500
@@ -247,13 +247,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  // ── Detail Hafalan ──
-  hafalanRow: {
+  // ── Detail Tahsin ──
+  TahsinRow: {
     flexDirection: 'row',
     gap: 10,
     marginBottom: 14,
   },
-  hafalanItem: {
+  TahsinItem: {
     flex: 1,
     backgroundColor: `${TOSCA}12`,
     borderRadius: 6,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     alignItems: 'center',
   },
-  hafalanLabel: {
+  TahsinLabel: {
     fontSize: 8,
     color: TOSCA_D,
     fontFamily: 'Helvetica-Bold',
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 2,
   },
-  hafalanValue: {
+  TahsinValue: {
     fontSize: 12,
     color: DARK,
     fontFamily: 'Helvetica-Bold',
@@ -664,7 +664,7 @@ export function SertifikatPDF({ data }: { data: SertifikatData }) {
     <Document
       title={`Sertifikat Tahfizh - ${santriName}`}
       author={namaSekolah}
-      subject="Sertifikat Hafalan Al-Quran"
+      subject="Sertifikat Tahsin Al-Quran"
       creator="Baitul Huffaz System"
     >
       {/* ═══════════════════════════════════════════════════════
@@ -739,19 +739,19 @@ export function SertifikatPDF({ data }: { data: SertifikatData }) {
             `dan ketekunan dalam menghafal Kitabullah.`}
         </Text>
 
-        {/* ── Detail Hafalan ── */}
-        <View style={styles.hafalanRow}>
-          <View style={styles.hafalanItem}>
-            <Text style={styles.hafalanLabel}>Nama Surat</Text>
-            <Text style={styles.hafalanValue}>{namaSurat}</Text>
+        {/* ── Detail Tahsin ── */}
+        <View style={styles.TahsinRow}>
+          <View style={styles.TahsinItem}>
+            <Text style={styles.TahsinLabel}>Nama Surat</Text>
+            <Text style={styles.TahsinValue}>{namaSurat}</Text>
           </View>
-          <View style={styles.hafalanItem}>
-            <Text style={styles.hafalanLabel}>Juz ke-</Text>
-            <Text style={styles.hafalanValue}>{juzKe}</Text>
+          <View style={styles.TahsinItem}>
+            <Text style={styles.TahsinLabel}>Juz ke-</Text>
+            <Text style={styles.TahsinValue}>{juzKe}</Text>
           </View>
-          <View style={styles.hafalanItem}>
-            <Text style={styles.hafalanLabel}>Status</Text>
-            <Text style={[styles.hafalanValue, {
+          <View style={styles.TahsinItem}>
+            <Text style={styles.TahsinLabel}>Status</Text>
+            <Text style={[styles.TahsinValue, {
               fontSize: 10,
               color: statusKelulusan === 'Lulus' ? '#065f46'
                    : statusKelulusan === 'Proses' ? '#92400e'
@@ -774,13 +774,13 @@ export function SertifikatPDF({ data }: { data: SertifikatData }) {
       </Page>
 
       {/* ═══════════════════════════════════════════════════════
-          HALAMAN 2 — LAMPIRAN NILAI HAFALAN
+          HALAMAN 2 — LAMPIRAN NILAI Tahsin
       ═══════════════════════════════════════════════════════ */}
       <Page size="A4" style={styles.page}>
 
         {/* ── Header Lampiran ── */}
         <View style={styles.lampiranHeader}>
-          <Text style={styles.lampiranJudul}>LAMPIRAN NILAI HAFALAN</Text>
+          <Text style={styles.lampiranJudul}>LAMPIRAN NILAI Tahsin</Text>
           <Text style={styles.lampiranSub}>
             Merupakan bagian tidak terpisahkan dari Sertifikat No. {nomorSertifikat}
           </Text>
@@ -845,10 +845,10 @@ export function SertifikatPDF({ data }: { data: SertifikatData }) {
           </Text>
         </View>
 
-        {/* ── Catatan Musyrif (jika ada) ── */}
+        {/* ── Catatan Guru (jika ada) ── */}
         {catatan ? (
           <View style={styles.catatanBox}>
-            <Text style={styles.catatanLabel}>Catatan Musyrif</Text>
+            <Text style={styles.catatanLabel}>Catatan Guru</Text>
             <Text style={styles.catatanText}>"{catatan}"</Text>
           </View>
         ) : null}

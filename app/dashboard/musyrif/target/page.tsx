@@ -1,5 +1,4 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -20,6 +19,9 @@ import {
 } from 'lucide-react';
 import { useSettings } from '@/lib/hooks/useSettings';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useSantriList, useTargetList, useCreateTarget } from '@/lib/hooks/useApi';
+import { useQueryClient } from '@tanstack/react-query';
+import { apiKeys } from '@/lib/hooks/useApi';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -36,18 +38,18 @@ interface Santri {
 interface TargetRecord {
   id: string;
   santriId: string;
-  nis: string;           // ← BARU: untuk sinkron NIS ke sertifikat
+  nis: string;
   santriName: string;
   kelasNama: string;
   juzTarget: string;
-  namaSurat: string;     // ← BARU: nama surat yang sedang dihafal
+  namaSurat: string;
   progres: number;
-  statusLulus: 'Proses' | 'Lulus' | 'Belum Lulus'; // ← BARU
-  catatan?: string;      // ← BARU: catatan opsional musyrif
+  statusLulus: 'Proses' | 'Lulus' | 'Belum Lulus';
+  catatan?: string;
   updatedAt: string;
 }
 
-// ─── Default Seed Data (sudah mengandung field baru) ──────────────────────────
+// ─── Default Seed Data ────────────────────────────────────────────────────────
 
 const defaultTargetRecords: TargetRecord[] = [];
 
@@ -77,12 +79,13 @@ export default function TargetPage() {
   const { settings } = useSettings();
   const { user } = useAuth();
 
-  // Data states
-  const [santriList, setSantriList] = useState<Santri[]>([]);
-  const [records, setRecords]       = useState<TargetRecord[]>([]);
+  const { data: santriData } = useSantriList();
+  const { data: targetData } = useTargetList();
+  const createTarget = useCreateTarget();
+  const queryClient = useQueryClient();
 
   // Form input states
-  const [targetSantriId,  setTargetSantriId]  = useState('1');
+  const [targetSantriId,  setTargetSantriId]  = useState('');
   const [newTargetJuz,    setNewTargetJuz]     = useState('1');
   const [newNamaSurat,    setNewNamaSurat]     = useState('');
   const [newProgres,      setNewProgres]       = useState('60');
@@ -91,49 +94,36 @@ export default function TargetPage() {
 
   const [notification, setNotification] = useState<string | null>(null);
 
-  // ── Load from API ─────────────────────────────────────────────────────────
-  const loadData = async () => {
-    try {
-      const [santriRes, targetRes] = await Promise.all([
-        fetch('/api/santri'),
-        fetch('/api/target')
-      ]);
-      if (santriRes.ok) {
-        const santriData = await santriRes.json();
-        setSantriList((santriData.data || []).map((s: any) => ({
-          id: s.id,
-          nis: s.nis || '',
-          nisn: s.nisn || '',
-          nama_lengkap: s.full_name || '',
-          kelas_id: s.kelas_id || '',
-          kelas_nama: s.kelas_nama || '',
-          is_active: s.is_active,
-        })));
-      }
-      if (targetRes.ok) {
-        const targetData = await targetRes.json();
-        const mapped = (targetData.data || []).map((r: any) => ({
-          id: r.id,
-          santriId: r.santuario_id,
-          nis: r.nis || '',
-          santriName: r.santri_nama || '',
-          kelasNama: r.kelas_nama || '',
-          juzTarget: String(r.juz || ''),
-          namaSurat: r.surah || '',
-          progres: r.progres || 0,
-          statusLulus: r.status === 'SELESAI' ? 'Lulus' : r.status === 'TERLAMBAT' ? 'Belum Lulus' : 'Proses',
-          catatan: r.catatan || '',
-          updatedAt: r.target_date ? new Date(r.target_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
-        }));
-        setRecords(mapped);
-      }
-    } catch (e) { console.error(e); }
-  };
+  const santriList: Santri[] = (santriData?.data || []).map((s: any) => ({
+    id: s.id,
+    nis: s.nis || '',
+    nisn: s.nisn || '',
+    nama_lengkap: s.full_name || '',
+    kelas_id: s.kelas_id || '',
+    kelas_nama: s.kelas_nama || '',
+    is_active: s.is_active,
+  }));
 
+  const records: TargetRecord[] = (targetData?.data || []).map((r: any) => ({
+    id: r.id,
+    santriId: r.santuario_id,
+    nis: r.nis || '',
+    santriName: r.santri_nama || '',
+    kelasNama: r.kelas_nama || '',
+    juzTarget: String(r.juz || ''),
+    namaSurat: r.surah || '',
+    progres: r.progres || 0,
+    statusLulus: r.status === 'SELESAI' ? 'Lulus' : r.status === 'TERLAMBAT' ? 'Belum Lulus' : 'Proses',
+    catatan: r.catatan || '',
+    updatedAt: r.target_date ? new Date(r.target_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  }));
+
+  // ── Set default santri + pre-fill form ─────────────────────────────────────
   useEffect(() => {
-    loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (santriList.length > 0 && !targetSantriId) {
+      setTargetSantriId(santriList[0].id);
+    }
+  }, [santriList, targetSantriId]);
 
   // ── Pre-fill form saat pilih santri berubah ────────────────────────────────
   useEffect(() => {
@@ -194,24 +184,18 @@ export default function TargetPage() {
           })
         });
         if (!res.ok) throw new Error('Failed to update target');
+        queryClient.invalidateQueries({ queryKey: apiKeys.target.all });
       } else {
-        const res = await fetch('/api/target', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            santuario_id: selectedSantri.id,
-            surah: newNamaSurat.trim(),
-            juz: parseInt(newTargetJuz) || 1,
-            progres: prog,
-            status: apiStatus,
-            catatan: newCatatan.trim(),
-            target_date: new Date().toISOString().split('T')[0]
-          })
+        await createTarget.mutateAsync({
+          santuario_id: selectedSantri.id,
+          surah: newNamaSurat.trim(),
+          juz: parseInt(newTargetJuz) || 1,
+          progres: prog,
+          status: apiStatus,
+          catatan: newCatatan.trim(),
+          target_date: new Date().toISOString().split('T')[0]
         });
-        if (!res.ok) throw new Error('Failed to create target');
       }
-
-      await loadData();
 
       showNotification(
         `Target ${selectedSantri.nama_lengkap} → Juz ${newTargetJuz} (${newNamaSurat}) berhasil disimpan!`
@@ -225,40 +209,12 @@ export default function TargetPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-24 lg:pb-8">
-
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-tosca-100/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard/musyrif"
-              className="h-10 w-10 rounded-2xl bg-tosca-50 border border-tosca-100 flex items-center justify-center text-tosca-600 hover:bg-tosca-100 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <span className="text-base font-black text-tosca-950 block tracking-tight">Target Hafalan</span>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-[10px] text-tosca-500 font-extrabold uppercase tracking-wider">
-                  {settings.appName} • TA {settings.tahunAjaran}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="h-9 w-9 rounded-xl bg-fuchsia-600 text-white flex items-center justify-center font-bold text-sm">
-            UM
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <>
 
         {/* ── Notifikasi Toast ── */}
         {notification && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slate-900/95 backdrop-blur text-white px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4 max-w-sm text-center">
-            <CheckCircle2 className="text-teal-400 shrink-0" size={18} />
+            <CheckCircle2 className="text-tosca-400 shrink-0" size={18} />
             <span className="text-xs font-extrabold">{notification}</span>
           </div>
         )}
@@ -270,7 +226,7 @@ export default function TargetPage() {
               <Target size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-800">Kelola Target Hafalan Santri</h3>
+              <h3 className="text-sm font-black text-slate-800">Kelola Target Tahsin Siswa</h3>
               <p className="text-[10px] text-slate-400 font-semibold">Data ini akan digunakan untuk menerbitkan sertifikat</p>
             </div>
           </div>
@@ -280,7 +236,7 @@ export default function TargetPage() {
             {/* Pilih Santri */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                Pilih Santri
+                Pilih Siswa
               </label>
               <select
                 value={targetSantriId}
@@ -331,7 +287,7 @@ export default function TargetPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                  Progres Hafalan (%)
+                  Progres Tahsin (%)
                 </label>
                 <input
                   type="number"
@@ -363,11 +319,11 @@ export default function TargetPage() {
             {/* Catatan (opsional) */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                Catatan Musyrif <span className="normal-case font-normal text-slate-400">(opsional)</span>
+                Catatan Guru <span className="normal-case font-normal text-slate-400">(opsional)</span>
               </label>
               <textarea
                 rows={3}
-                placeholder="Contoh: Hafalan lancar dan tartil, siap untuk munaqasyah..."
+                placeholder="Contoh: Tahsin lancar dan tartil, siap untuk munaqasyah..."
                 value={newCatatan}
                 onChange={(e) => setNewCatatan(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 resize-none text-sm leading-relaxed"
@@ -395,7 +351,7 @@ export default function TargetPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">
-                  <th className="py-4 px-5">Nama Santri</th>
+                  <th className="py-4 px-5">Nama Siswa</th>
                   <th className="py-4 px-5">Kelas</th>
                   <th className="py-4 px-5 text-center">Target Juz</th>
                   <th className="py-4 px-5">Nama Surat</th>
@@ -485,7 +441,7 @@ export default function TargetPage() {
           {records.some(r => r.catatan) && (
             <div className="p-5 border-t border-slate-50 bg-slate-50/20 space-y-2">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                <Activity size={12} /> Catatan Musyrif
+                <Activity size={12} /> Catatan Guru
               </p>
               {santriList.map(s => {
                 const rec = records.find(r => r.santriId === s.id);
@@ -501,31 +457,6 @@ export default function TargetPage() {
           )}
         </div>
 
-      </main>
-
-      {/* ── Bottom Nav ── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-100 px-3 sm:px-6 py-2.5 flex items-center justify-around shadow-2xl">
-        <Link href="/dashboard/musyrif" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <Home size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Utama</span>
-        </Link>
-        <Link href="/dashboard/musyrif/setoran" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <BookOpen size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Setoran</span>
-        </Link>
-        <Link href="/dashboard/musyrif/nilai" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <Star size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Nilai</span>
-        </Link>
-        <Link href="/dashboard/musyrif/presensi" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <CheckSquare size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Presensi</span>
-        </Link>
-        <Link href="/dashboard/musyrif/profil" className="flex flex-col items-center justify-center gap-1 flex-1 text-slate-400 hover:text-tosca-600 transition-colors">
-          <User size={20} />
-          <span className="text-[9px] font-extrabold tracking-tight hidden sm:inline">Profil</span>
-        </Link>
-      </nav>
-    </div>
+    </>
   );
 }

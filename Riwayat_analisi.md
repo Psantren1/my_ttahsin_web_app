@@ -36,8 +36,8 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
    12 ### 1.1 Deskripsi Sistem
    13 Baitul Huffaz adalah sistem manajemen lembaga tahfizh Al-Qur'an yang menyediakan fitur untuk:
    14 - **Dashboard Admin**: Manajemen data keseluruhan (santri, musyrif, jadwal, nilai)
-   15 - **Dashboard Musyrif**: Input setoran hafalan, penilaian, evaluasi, presensi
-   16 - **Dashboard Santri**: Monitoring hafalan, raport, sertifikat, akses zoom
+   15 - **Dashboard Musyrif**: Input setoran Tahsin, penilaian, evaluasi, presensi
+   16 - **Dashboard Santri**: Monitoring Tahsin, raport, sertifikat, akses zoom
    17 - **Autentikasi**: Login multi-role (Admin, Musyrif, Santri)
    18
    19 ### 1.2 Struktur Direktori
@@ -51,7 +51,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
    27 │   │   └── santri/        # Dashboard santri
    28 │   ├── evaluasi/          # Halaman evaluasi (redirect)
    29 │   ├── forgot-password/   # Lupa password
-   30 │   ├── hafalan/           # Halaman hafalan (redirect)
+   30 │   ├── Tahsin/           # Halaman Tahsin (redirect)
    31 │   ├── jadwal/            # Halaman jadwal (redirect)
    32 │   ├── login/             # Halaman login
    33 │   ├── raport/            # Halaman raport (redirect)
@@ -65,7 +65,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
    41 ├── lib/
    42 │   ├── auth/             # Modul autentikasi
    43 │   ├── hooks/            # Custom React hooks
-   44 │   ├── services/         # Service layer (absensi, evaluasi, hafalan, jadwal, raport, sertifikat)
+   44 │   ├── services/         # Service layer (absensi, evaluasi, Tahsin, jadwal, raport, sertifikat)
    45 │   └── supabase/         # Konfigurasi Supabase
    46 ├── database/
    47 │   ├── migrations/       # SQL migrations
@@ -101,7 +101,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
    77
    78 #### b. Dashboard Musyrif yang Komprehensif
    79 - Modul launcher horizontal (Android-style UI)
-   80 - Form input setoran hafalan
+   80 - Form input setoran Tahsin
    81 - Sistem penilaian (tajwid, makhraj, kelancaran)
    82 - Input kehadiran dan evaluasi
    83 - Manajemen jadwal
@@ -130,9 +130,9 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   106
   107 #### **[CRITICAL-01] Redirect Pages Tidak Berfungsi**
   108 ```
-  109 File: app/absensi/page.tsx, app/hafalan/page.tsx, app/raport/page.tsx
+  109 File: app/absensi/page.tsx, app/Tahsin/page.tsx, app/raport/page.tsx
   110 Masalah: Halaman-halaman ini hanya berisi redirect ke /login tanpa fungsi aktif
-  111 Dampak: User tidak bisa mengakses fitur absensi, hafalan, dan raport langsung
+  111 Dampak: User tidak bisa mengakses fitur absensi, Tahsin, dan raport langsung
   112 Solusi: Implementasikan halaman-halaman ini dengan fitur lengkap
   113 ```
   114
@@ -181,7 +181,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   157 File: database/migrations/users.sql
   158 Masalah: Hanya ada1 tabel (users), tidak ada tabel untuk:
   159   - kelas (kelas/group)
-  160   - setoran (hafalan records)
+  160   - setoran (Tahsin records)
   161   - jadwal (schedule)
   162   - absensi (attendance)
   163   - nilai (grades)
@@ -311,7 +311,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   287   created_at TIMESTAMP DEFAULT NOW()
   288 );
   289
-  290 -- 2. setoran (record hafalan)
+  290 -- 2. setoran (record Tahsin)
   291 CREATE TABLE public.setoran (
   292   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   293   santuario_id UUID REFERENCES public.users(id),
@@ -359,8 +359,8 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   335   created_at TIMESTAMP DEFAULT NOW()
   336 );
   337
-  338 -- 6. target_hafalan
-  339 CREATE TABLE public.target_hafalan (
+  338 -- 6. target_Tahsin
+  339 CREATE TABLE public.target_Tahsin (
   340   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   341   santuario_id UUID REFERENCES public.users(id),
   342   juz_target INT,
@@ -403,19 +403,19 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   379 - Export laporan absensi
   380 ```
   381
-  382 #### B. Halaman Hafalan
+  382 #### B. Halaman Tahsin
   383 ```typescript
   384 // Fitur yang diperlukan:
   385 - Form input setoran baru
   386 - Daftar setoran terbaru
-  387 - Progress hafalan per Juz
+  387 - Progress Tahsin per Juz
   388 - Filter berdasarkan tanggal/ustadz
   389 ```
   390
   391 #### C. Halaman Raport
   392 ```typescript
   393 // Fitur yang diperlukan:
-  394 - Ringkasan nilai hafalan
+  394 - Ringkasan nilai Tahsin
   395 - Grafik perkembangan
   396 - Cetak raport PDF
   397 - Riwayat setoran lengkap
@@ -439,7 +439,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   415 #### A. Service Layer Implementation
   416 ```typescript
   417 // lib/services/absensi.service.ts
-  418 // lib/services/hafalan.service.ts
+  418 // lib/services/Tahsin.service.ts
   419 // lib/services/nilai.service.ts
   420 // lib/services/jadwal.service.ts
   421 // lib/services/sertifikat.service.ts
@@ -500,16 +500,16 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   476 - [ ] Statistik & Analytics
   477
   478 #### Musyrif Dashboard
-  479 - [ ] Input Setoran Hafalan
+  479 - [ ] Input Setoran Tahsin
   480 - [ ] Input Penilaian (Tajwid, Makhraj, Kelancaran)
   481 - [ ] Input Kehadiran
   482 - [ ] Input Evaluasi Sikap
-  483 - [ ] Update Target Hafalan
+  483 - [ ] Update Target Tahsin
   484 - [ ] Manajemen Jadwal
   485 - [ ] Download Sertifikat
   486
   487 #### Santri Dashboard
-  488 - [ ] Lihat Nilai Hafalan
+  488 - [ ] Lihat Nilai Tahsin
   489 - [ ] Lihat Raport
   490 - [ ] Lihat Progress Target
   491 - [ ] Akses Zoom Link
@@ -613,7 +613,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   ┌─────┬───────────────────────────────────────────────────────────────┬──────────────────────────┬───────────────────────────────┐
   │  #  │                            Masalah                            │          Lokasi          │            Solusi             │
   ├─────┼───────────────────────────────────────────────────────────────┼──────────────────────────┼───────────────────────────────┤
-  │ 1   │ Redirect pages - /absensi, /hafalan, /raport kosong           │ app/                     │ Implementasi fitur lengkap    │
+  │ 1   │ Redirect pages - /absensi, /Tahsin, /raport kosong           │ app/                     │ Implementasi fitur lengkap    │
   ├─────┼───────────────────────────────────────────────────────────────┼──────────────────────────┼───────────────────────────────┤
   │ 2   │ Mock auth - login pakai hardcoded credentials                 │ app/login/page.tsx:19-31 │ Integrasi Supabase Auth       │
   ├─────┼───────────────────────────────────────────────────────────────┼──────────────────────────┼───────────────────────────────┤
@@ -778,20 +778,20 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
    19 +- Manajemen Musyrif/Ustadz
    20 +- Manajemen Kelas/Halaqah
    21 +- Manajemen Jadwal
-   22 +- Input& Review Nilai Hafalan
+   22 +- Input& Review Nilai Tahsin
    23 +- Generate Raport
    24 +- Generate Sertifikat
    25 +
    26 +### Dashboard Musyrif
-   27 +- Input Setoran Hafalan
+   27 +- Input Setoran Tahsin
    28 +- Input Penilaian (Tajwid, Makhraj, Kelancaran)
    29 +- Input Kehadiran
    30 +- Input Evaluasi Sikap
-   31 +- Update Target Hafalan
+   31 +- Update Target Tahsin
    32 +- Download Sertifikat
    33 +
    34 +### Dashboard Santri
-   35 +- Lihat Nilai Hafalan
+   35 +- Lihat Nilai Tahsin
    36 +- Lihat Raport
    37 +- Lihat Progress Target
    38 +- Akses Zoom Link
@@ -896,8 +896,8 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   137 +  created_at TIMESTAMP DEFAULT NOW()
   138 +);
   139 +
-  140 +-- Target Hafalan table
-  141 +CREATE TABLE public.target_hafalan (
+  140 +-- Target Tahsin table
+  141 +CREATE TABLE public.target_Tahsin (
   142 +  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   143 +  santuario_id UUID REFERENCES public.users(id),
   144 +  juz_target INT,
@@ -1151,7 +1151,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
    44 ALTER TABLE users ADD CONSTRAINT fk_users_kelas FOREIGN KEY (kelas_id) REFERENCES kelas(id);
    45
    46 -- ============================================
-   47 -- TABLE: setoran (Hafalan Records)
+   47 -- TABLE: setoran (Tahsin Records)
    48 -- ============================================
    49 CREATE TABLE IF NOT EXISTS setoran (
    50   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -1221,9 +1221,9 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   114 );
   115
   116 -- ============================================
-  117 -- TABLE: target_hafalan
+  117 -- TABLE: target_Tahsin
   118 -- ============================================
-  119 CREATE TABLE IF NOT EXISTS target_hafalan (
+  119 CREATE TABLE IF NOT EXISTS target_Tahsin (
   120   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   121   santuario_id UUID NOT NULL REFERENCES users(id),
   122   juz_target INT NOT NULL,
@@ -1642,10 +1642,10 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
        7
        8  export const metadata: Metadata = {
        8 -  title: "Baitul Huffaz",
-       9 -  description: "Aplikasi Manajemen Hafalan Al-Qur'an",
-       9 +  title: "Baitul Huffaz - Sistem Manajemen Hafalan Al-Qur'an",
+       9 -  description: "Aplikasi Manajemen Tahsin Al-Qur'an",
+       9 +  title: "Baitul Huffaz - Sistem Manajemen Tahsin Al-Qur'an",
       10 +  description: "Aplikasi manajemen lembaga tahfizh Al-Qur'an Baitul Huffaz",
-      11 +  keywords: ["tahfizh", "al-quran", "hafalan", "islam", "pendidikan"],
+      11 +  keywords: ["tahfizh", "al-quran", "Tahsin", "islam", "pendidikan"],
       12 +  authors: [{ name: "Baitul Huffaz" }],
       13  };
       14
@@ -1801,10 +1801,10 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
        7
        8  export const metadata: Metadata = {
        8 -  title: "Baitul Huffaz",
-       9 -  description: "Aplikasi Manajemen Hafalan Al-Qur'an",
-       9 +  title: "Baitul Huffaz - Sistem Manajemen Hafalan Al-Qur'an",
+       9 -  description: "Aplikasi Manajemen Tahsin Al-Qur'an",
+       9 +  title: "Baitul Huffaz - Sistem Manajemen Tahsin Al-Qur'an",
       10 +  description: "Aplikasi manajemen lembaga tahfizh Al-Qur'an Baitul Huffaz",
-      11 +  keywords: ["tahfizh", "al-quran", "hafalan", "islam", "pendidikan"],
+      11 +  keywords: ["tahfizh", "al-quran", "Tahsin", "islam", "pendidikan"],
       12 +  authors: [{ name: "Baitul Huffaz" }],
       13  };
       14
@@ -2108,8 +2108,8 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   18  - Manajemen Musyrif/Ustadz
   19  - Manajemen Kelas/Halaqah
   20  - Manajemen Jadwal
-  22 -- Input& Review Nilai Hafalan
-  21 +- Input & Review Nilai Hafalan
+  22 -- Input& Review Nilai Tahsin
+  21 +- Input & Review Nilai Tahsin
   22  - Generate Raport
   23  - Generate Sertifikat
   24
@@ -2216,8 +2216,8 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   137 -  created_at TIMESTAMP DEFAULT NOW()
   138 -);
   139 -
-  140 --- Target Hafalan table
-  141 -CREATE TABLE public.target_hafalan (
+  140 --- Target Tahsin table
+  141 -CREATE TABLE public.target_Tahsin (
   142 -  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   143 -  santuario_id UUID REFERENCES public.users(id),
   144 -  juz_target INT,
@@ -2311,8 +2311,8 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
       18  - Manajemen Musyrif/Ustadz
       19  - Manajemen Kelas/Halaqah
       20  - Manajemen Jadwal
-      22 -- Input& Review Nilai Hafalan
-      21 +- Input & Review Nilai Hafalan
+      22 -- Input& Review Nilai Tahsin
+      21 +- Input & Review Nilai Tahsin
       22  - Generate Raport
       23  - Generate Sertifikat
       24
@@ -2419,8 +2419,8 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
       137 -  created_at TIMESTAMP DEFAULT NOW()
       138 -);
       139 -
-      140 --- Target Hafalan table
-      141 -CREATE TABLE public.target_hafalan (
+      140 --- Target Tahsin table
+      141 -CREATE TABLE public.target_Tahsin (
       142 -  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       143 -  santuario_id UUID REFERENCES public.users(id),
       144 -  juz_target INT,
@@ -2479,13 +2479,13 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
       108 +```
       109 +users          - Data user (admin, musyrif, santri)
       110 +kelas          - Data kelas/halaqah
-      111 +setoran        - Record setoran hafalan
+      111 +setoran        - Record setoran Tahsin
       112 +jadwal         - Jadwal kegiatan
       113 +absensi        - Kehadiran harian
       114 +evaluasi       - Evaluasi sikap/adab
-      115 +target_hafalan - Target hafalan per santri
+      115 +target_Tahsin - Target Tahsin per santri
       116 +sertifikat     - Data sertifikat
-      117 +raport         - Raport hafalan
+      117 +raport         - Raport Tahsin
       118 +zoom_meetings  - Data meeting zoom
       119 +```
       120 +
@@ -2593,7 +2593,7 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
    44 ALTER TABLE users ADD CONSTRAINT fk_users_kelas FOREIGN KEY (kelas_id) REFERENCES kelas(id);
    45
    46 -- ============================================
-   47 -- TABLE: setoran (Hafalan Records)
+   47 -- TABLE: setoran (Tahsin Records)
    48 -- ============================================
    49 CREATE TABLE IF NOT EXISTS setoran (
    50   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -2663,9 +2663,9 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
   114 );
   115
   116 -- ============================================
-  117 -- TABLE: target_hafalan
+  117 -- TABLE: target_Tahsin
   118 -- ============================================
-  119 CREATE TABLE IF NOT EXISTS target_hafalan (
+  119 CREATE TABLE IF NOT EXISTS target_Tahsin (
   120   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   121   santuario_id UUID NOT NULL REFERENCES users(id),
   122   juz_target INT NOT NULL,
@@ -3073,13 +3073,13 @@ analisis D:\2026\04. Mei\Kelompok 1 kls regurer\Baitul Huffaz, buatkan dokumen p
 
   users          - admin, musyrif, santuario
   kelas          - halaqah/kelompok
-  setoran        - record setoran hafalan
+  setoran        - record setoran Tahsin
   jadwal         - jadwal kegiatan
   absensi        - kehadiran
   evaluasi       - evaluasi adab
-  target_hafalan - target per santuario
+  target_Tahsin - target per santuario
   sertifikat     - data sertifikat
-  raport         - raport hafalan
+  raport         - raport Tahsin
   zoom_meetings  - data zoom
 
   Langkah Selanjutnya:

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Sidebar from '@/components/ui/sidebar';
-import Navbar from '@/components/ui/navbar';
+import React, { useState } from 'react';
+
+import { useJadwalList, useKelasList, useMusyrifList, useCreateJadwal } from '@/lib/hooks/useApi';
 import { 
   Calendar as CalendarIcon, 
   Clock, 
@@ -17,11 +17,9 @@ import {
 } from 'lucide-react';
 
 export default function ManajemenJadwal() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [selectedDay, setSelectedDay] = useState(16);
-  const [scheduleData, setScheduleData] = useState<any[]>([]);
   const [formSesi, setFormSesi] = useState('');
   const [formHari, setFormHari] = useState('');
   const [formTanggal, setFormTanggal] = useState('');
@@ -31,32 +29,18 @@ export default function ManajemenJadwal() {
   const [formJamSelesai, setFormJamSelesai] = useState('');
   const [formMusyrifId, setFormMusyrifId] = useState('');
   const [formLokasi, setFormLokasi] = useState('');
-  const [kelasOptions, setKelasOptions] = useState<any[]>([]);
-  const [musyrifOptions, setMusyrifOptions] = useState<any[]>([]);
+
+  const { data: jadwalData } = useJadwalList();
+  const { data: kelasData } = useKelasList();
+  const { data: musyrifData } = useMusyrifList();
+
+  const scheduleData = jadwalData?.data || [];
+  const kelasOptions = kelasData?.data || [];
+  const musyrifOptions = musyrifData?.data || [];
+
+  const createJadwal = useCreateJadwal();
 
   const hariList = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
-
-  const loadData = async () => {
-    try {
-      const [jadwalRes, kelasRes, musyrifRes] = await Promise.all([
-        fetch('/api/jadwal'),
-        fetch('/api/kelas'),
-        fetch('/api/musyrif'),
-      ]);
-      const jadwalJson = await jadwalRes.json();
-      const kelasJson = await kelasRes.json();
-      const musyrifJson = await musyrifRes.json();
-      if (jadwalJson.data) setScheduleData(jadwalJson.data);
-      if (kelasJson.data) setKelasOptions(kelasJson.data);
-      if (musyrifJson.data) setMusyrifOptions(musyrifJson.data);
-    } catch (err) {
-      console.error('Failed to load data', err);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const triggerToast = () => {
     setShowToast(true);
@@ -66,22 +50,17 @@ export default function ManajemenJadwal() {
   const handleCreateSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/jadwal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sesi: formSesi,
-          hari: formHari,
-          tanggal: formTanggal || null,
-          jam_mulai: formJamMulai,
-          jam_selesai: formJamSelesai,
-          lokasi: formLokasi,
-          kelas_id: formKelasId || null,
-          musyrif_id: formMusyrifId || null,
-          is_active: true,
-        }),
+      await createJadwal.mutateAsync({
+        sesi: formSesi,
+        hari: formHari,
+        tanggal: formTanggal || null,
+        jam_mulai: formJamMulai,
+        jam_selesai: formJamSelesai,
+        lokasi: formLokasi,
+        kelas_id: formKelasId || null,
+        musyrif_id: formMusyrifId || null,
+        is_active: true,
       });
-      if (!res.ok) throw new Error('Failed to create jadwal');
       setIsModalOpen(false);
       setFormSesi('');
       setFormHari('');
@@ -93,26 +72,20 @@ export default function ManajemenJadwal() {
       setFormMusyrifId('');
       setFormLokasi('');
       triggerToast();
-      await loadData();
     } catch (err) {
       console.error('Failed to create jadwal', err);
     }
   };
 
-  const selectedKelas = kelasOptions.find(k => k.id === formKelasId);
+  const selectedKelas = kelasOptions.find((k: any) => k.id === formKelasId);
 
   return (
-    <div className="min-h-screen bg-tosca-50/30">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      
-      <div className="lg:pl-72 transition-all duration-300">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
-        
+    <>
         <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {/* Header Card with White Background */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-tosca-50 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-surface-100 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-tosca-900">Manajemen Jadwal</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900">Manajemen Jadwal</h1>
               <p className="text-tosca-600 font-medium">Atur jadwal kegiatan halaqah dan akademik Baitul Huffaz.</p>
             </div>
             <div className="flex items-center gap-4">
@@ -135,12 +108,12 @@ export default function ManajemenJadwal() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Calendar Mini */}
             <div className="lg:col-span-1 space-y-6">
-              <div className="bg-white rounded-3xl p-6 border border-tosca-50 shadow-sm">
+              <div className="bg-white rounded-3xl p-6 border border-surface-100 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-extrabold text-tosca-900">Mei 2026</h3>
+                  <h3 className="font-bold text-tosca-900">Mei 2026</h3>
                   <div className="flex gap-1">
-                    <button className="p-1.5 text-tosca-400 hover:bg-tosca-50 rounded-lg transition-colors"><ChevronLeft size={18} /></button>
-                    <button className="p-1.5 text-tosca-400 hover:bg-tosca-50 rounded-lg transition-colors"><ChevronRight size={18} /></button>
+                    <button className="p-1.5 text-surface-400 hover:bg-tosca-50 rounded-lg transition-colors"><ChevronLeft size={18} /></button>
+                    <button className="p-1.5 text-surface-400 hover:bg-tosca-50 rounded-lg transition-colors"><ChevronRight size={18} /></button>
                   </div>
                 </div>
                 <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-tosca-300 mb-4">
@@ -171,14 +144,14 @@ export default function ManajemenJadwal() {
                 <span className="text-sm font-bold text-tosca-500 bg-tosca-50 px-3 py-1 rounded-full">Sabtu, {selectedDay} Mei 2026</span>
               </div>
               
-              {scheduleData.map((item, idx) => (
-                <div key={idx} className="bg-white p-6 rounded-3xl border border-tosca-50 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:border-tosca-200 hover:shadow-md transition-all group">
+              {scheduleData.map((item: any, idx: number) => (
+                <div key={idx} className="bg-white p-6 rounded-3xl border border-surface-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:border-tosca-200 hover:shadow-md transition-all group">
                   <div className="flex items-start gap-5">
                     <div className="p-4 bg-tosca-50 rounded-2xl text-tosca-600 group-hover:bg-tosca-600 group-hover:text-white transition-all duration-300">
                       <Clock size={28} />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-xl font-extrabold text-tosca-900">{item.sesi}</h4>
+                      <h4 className="text-xl font-bold text-tosca-900">{item.sesi}</h4>
                       <p className="text-sm text-tosca-500 font-bold flex items-center gap-1">
                         <Clock size={14} />
                         {item.jam_mulai ? item.jam_mulai.slice(0, 5) : '-'} - {item.jam_selesai ? item.jam_selesai.slice(0, 5) : '-'}
@@ -191,7 +164,7 @@ export default function ManajemenJadwal() {
                         {(item.musyrif_name || 'U')[0]}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs text-tosca-400 font-bold uppercase tracking-wider">Pengajar</span>
+                        <span className="text-xs text-surface-400 font-bold uppercase tracking-wider">Pengajar</span>
                         <span className="text-sm font-bold text-tosca-800">{item.musyrif_name || '-'}</span>
                       </div>
                     </div>
@@ -200,7 +173,7 @@ export default function ManajemenJadwal() {
                         <MapPin size={20} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs text-tosca-400 font-bold uppercase tracking-wider">Lokasi</span>
+                        <span className="text-xs text-surface-400 font-bold uppercase tracking-wider">Lokasi</span>
                         <span className="text-sm font-bold text-tosca-800">{item.lokasi || '-'}</span>
                       </div>
                     </div>
@@ -217,20 +190,17 @@ export default function ManajemenJadwal() {
             </div>
           </div>
         </main>
-      </div>
-
-      {/* Modal Buat Jadwal Baru */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-tosca-50 bg-tosca-50/20 shrink-0">
+            <div className="flex items-center justify-between p-6 border-b border-surface-100 bg-tosca-50/20 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-tosca-600 rounded-xl text-white">
                   <CalendarIcon size={20} />
                 </div>
                 <h2 className="text-xl font-bold text-tosca-900">Buat Jadwal Baru</h2>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-tosca-400 hover:text-tosca-600 transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="text-surface-400 hover:text-tosca-600 transition-colors">
                 <X size={24} />
               </button>
             </div>
@@ -257,9 +227,9 @@ export default function ManajemenJadwal() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-tosca-700 ml-1">Pilihan Kelas</label>
-                  <select value={formKelasId} onChange={e => { setFormKelasId(e.target.value); const k = kelasOptions.find(kk => kk.id === e.target.value); setFormLevel(k ? `Level ${k.level}` : ''); }} className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-bold text-tosca-900">
+                  <select value={formKelasId} onChange={e => { setFormKelasId(e.target.value); const k = kelasOptions.find((kk: any) => kk.id === e.target.value); setFormLevel(k ? `Level ${k.level}` : ''); }} className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-bold text-tosca-900">
                     <option value="">-- Pilih Kelas --</option>
-                    {kelasOptions.map(k => (
+                    {kelasOptions.map((k: any) => (
                       <option key={k.id} value={k.id}>{k.nama}</option>
                     ))}
                   </select>
@@ -280,12 +250,12 @@ export default function ManajemenJadwal() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-tosca-700 ml-1">Musyrif/ah</label>
+                <label className="text-sm font-bold text-tosca-700 ml-1">Guru</label>
                 <select value={formMusyrifId} onChange={e => setFormMusyrifId(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm font-bold text-tosca-900">
-                  <option value="">-- Pilih Musyrif/ah --</option>
+                  <option value="">-- Pilih Guru --</option>
                   {musyrifOptions
-                    .filter(m => !formKelasId || m.kelas_id === formKelasId)
-                    .map(m => (
+                    .filter((m: any) => !formKelasId || m.kelas_id === formKelasId)
+                    .map((m: any) => (
                       <option key={m.id} value={m.id}>{m.nip} — {m.full_name}</option>
                     ))}
                 </select>
@@ -295,13 +265,13 @@ export default function ManajemenJadwal() {
                 <input type="text" value={formLokasi} onChange={e => setFormLokasi(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72] font-medium" placeholder="Nama ruangan" />
               </div>
               <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 border-2 border-tosca-50 text-tosca-600 rounded-xl font-bold hover:bg-tosca-50 transition-colors">Batal</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 border-2 border-surface-100 text-tosca-600 rounded-xl font-bold hover:bg-tosca-50 transition-colors">Batal</button>
                 <button type="submit" className="flex-1 px-4 py-3 bg-tosca-600 text-white rounded-xl font-bold hover:bg-tosca-700 transition-all shadow-lg shadow-tosca-200">Simpan Jadwal</button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

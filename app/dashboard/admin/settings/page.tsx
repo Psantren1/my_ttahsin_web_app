@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Sidebar from '@/components/ui/sidebar';
-import Navbar from '@/components/ui/navbar';
+
 import { useSettings } from '@/lib/hooks/useSettings';
 import { 
   Save, 
@@ -14,7 +13,6 @@ import {
 } from 'lucide-react';
 
 export default function Pengaturan() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const { settings, saveSettings } = useSettings();
 
@@ -75,17 +73,12 @@ export default function Pengaturan() {
   };
 
   return (
-    <div className="min-h-screen bg-tosca-50/30">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      
-      <div className="lg:pl-72 transition-all duration-300">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
-        
-        <main className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+    <>
+      <main className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
           {/* Header Card with White Background */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-tosca-50 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-surface-100 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-tosca-900">Pengaturan Aplikasi</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900">Pengaturan Aplikasi</h1>
               <p className="text-tosca-600 font-medium">Ubah nama aplikasi, informasi sistem, logo, dan ikon PWA secara reaktif.</p>
             </div>
             {showToast && (
@@ -98,10 +91,10 @@ export default function Pengaturan() {
 
           <form onSubmit={handleSave} className="space-y-6">
             {/* Identity Settings */}
-            <div className="bg-white rounded-3xl border border-tosca-50 shadow-sm overflow-hidden p-6 sm:p-8 space-y-6">
-              <div className="flex items-center gap-3 pb-4 border-b border-tosca-50">
+            <div className="bg-white rounded-3xl border border-surface-100 shadow-sm overflow-hidden p-6 sm:p-8 space-y-6">
+              <div className="flex items-center gap-3 pb-4 border-b border-surface-100">
                 <Settings className="text-tosca-600 w-6 h-6" />
-                <h2 className="text-xl font-black text-tosca-900">Identitas Aplikasi</h2>
+                <h2 className="text-xl font-bold text-tosca-900">Identitas Aplikasi</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -113,7 +106,7 @@ export default function Pengaturan() {
                     onChange={(e) => setAppName(e.target.value)}
                     placeholder="Baitul Huffaz"
                     required
-                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-tosca-50 focus:border-tosca-600 focus:ring-0 text-sm font-bold text-black transition-all bg-tosca-50/20" 
+                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-surface-100 focus:border-tosca-600 focus:ring-0 text-sm font-bold text-black transition-all bg-tosca-50/20" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -122,9 +115,9 @@ export default function Pengaturan() {
                     type="text" 
                     value={systemInfo} 
                     onChange={(e) => setSystemInfo(e.target.value)}
-                    placeholder="Sistem Manajemen Hafalan"
+                    placeholder="Sistem Manajemen Tahsin"
                     required
-                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-tosca-50 focus:border-tosca-600 focus:ring-0 text-sm font-bold text-black transition-all bg-tosca-50/20" 
+                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-surface-100 focus:border-tosca-600 focus:ring-0 text-sm font-bold text-black transition-all bg-tosca-50/20" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -135,23 +128,23 @@ export default function Pengaturan() {
                     onChange={(e) => setTahunAjaran(e.target.value)}
                     placeholder="2024/2025"
                     required
-                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-tosca-50 focus:border-tosca-600 focus:ring-0 text-sm font-bold text-black transition-all bg-tosca-50/20" 
+                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-surface-100 focus:border-tosca-600 focus:ring-0 text-sm font-bold text-black transition-all bg-tosca-50/20" 
                   />
                 </div>
               </div>
             </div>
 
             {/* Assets Settings (Logo and PWA) */}
-            <div className="bg-white rounded-3xl border border-tosca-50 shadow-sm overflow-hidden p-6 sm:p-8 space-y-6">
-              <div className="flex items-center gap-3 pb-4 border-b border-tosca-50">
+            <div className="bg-white rounded-3xl border border-surface-100 shadow-sm overflow-hidden p-6 sm:p-8 space-y-6">
+              <div className="flex items-center gap-3 pb-4 border-b border-surface-100">
                 <Sparkles className="text-tosca-600 w-6 h-6" />
-                <h2 className="text-xl font-black text-tosca-900">Aset Visual Aplikasi</h2>
+                <h2 className="text-xl font-bold text-tosca-900">Aset Visual Aplikasi</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Logo Section */}
                 <div className="flex flex-col items-center p-6 bg-tosca-50/10 rounded-3xl border border-dashed border-tosca-200">
-                  <span className="text-sm font-black text-tosca-900 mb-4">Logo Aplikasi</span>
+                  <span className="text-sm font-bold text-tosca-900 mb-4">Logo Aplikasi</span>
                   
                   <div className="relative group mb-6">
                     {logoUrl ? (
@@ -159,7 +152,7 @@ export default function Pengaturan() {
                         <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
                       </div>
                     ) : (
-                      <div className="h-28 w-28 rounded-3xl bg-tosca-600 flex items-center justify-center text-white text-5xl font-black shadow-lg shadow-tosca-100 transition-transform group-hover:scale-105">
+                      <div className="h-28 w-28 rounded-3xl bg-tosca-600 flex items-center justify-center text-white text-5xl font-bold shadow-lg shadow-tosca-100 transition-transform group-hover:scale-105">
                         {appName ? appName.charAt(0) : 'B'}
                       </div>
                     )}
@@ -185,7 +178,7 @@ export default function Pengaturan() {
 
                 {/* PWA Icon Section */}
                 <div className="flex flex-col items-center p-6 bg-tosca-50/10 rounded-3xl border border-dashed border-tosca-200">
-                  <span className="text-sm font-black text-tosca-900 mb-4">Ikon PWA</span>
+                  <span className="text-sm font-bold text-tosca-900 mb-4">Ikon PWA</span>
                   
                   <div className="relative group mb-6">
                     {pwaIconUrl ? (
@@ -193,7 +186,7 @@ export default function Pengaturan() {
                         <img src={pwaIconUrl} alt="PWA Icon" className="max-h-full max-w-full object-contain" />
                       </div>
                     ) : (
-                      <div className="h-28 w-28 rounded-3xl bg-teal-600 flex items-center justify-center text-white shadow-lg shadow-teal-100 transition-transform group-hover:scale-105">
+                      <div className="h-28 w-28 rounded-3xl bg-tosca-600 flex items-center justify-center text-white shadow-lg shadow-tosca-100 transition-transform group-hover:scale-105">
                         <Smartphone size={44} className="stroke-[2.2]" />
                       </div>
                     )}
@@ -222,14 +215,13 @@ export default function Pengaturan() {
             {/* Submit Button */}
             <button 
               type="submit"
-              className="w-full flex items-center justify-center gap-3 bg-tosca-900 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-tosca-100 hover:bg-black transition-all active:scale-[0.98] cursor-pointer"
+              className="w-full flex items-center justify-center gap-3 bg-tosca-900 text-white py-5 rounded-3xl font-bold text-lg shadow-xl shadow-tosca-100 hover:bg-black transition-all active:scale-[0.98] cursor-pointer"
             >
               <Save size={24} />
               Simpan Semua Perubahan
             </button>
           </form>
         </main>
-      </div>
-    </div>
+    </>
   );
 }

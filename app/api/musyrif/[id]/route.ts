@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserById, updateUser, deleteUser } from '@/lib/services/user.service';
+import { getSession } from '@/lib/auth/auth';
+import { createAuditLog } from '@/lib/services/audit.service';
+
+function requireAdmin(session: any): NextResponse | null {
+  if (!session || session.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Hanya admin yang dapat melakukan operasi ini' }, { status: 403 });
+  }
+  return null;
+}
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -13,22 +22,62 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
+const DUPLICATE_MESSAGES: Record<string, string> = {
+  DUPLICATE_EMAIL: 'Email sudah digunakan oleh akun lain',
+  DUPLICATE_USERNAME: 'Username sudah digunakan oleh akun lain',
+  DUPLICATE_NIS: 'NIS sudah digunakan oleh siswa lain',
+  DUPLICATE_NIP: 'NIP sudah digunakan oleh guru lain',
+};
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const session = await getSession();
+    const denied = requireAdmin(session);
+    if (denied) return denied;
+
     const body = await request.json();
+    const oldUser = await getUserById(params.id);
     const user = await updateUser(params.id, body);
     if (!user) {
       return NextResponse.json({ error: 'Musyrif tidak ditemukan' }, { status: 404 });
     }
+
+    await createAuditLog({
+      userId: session!.userId,
+      action: 'UPDATE',
+      entityType: 'user',
+      entityId: params.id,
+      oldValues: oldUser ? { full_name: oldUser.full_name, email: oldUser.email, nip: oldUser.nip, is_active: oldUser.is_active } : null,
+      newValues: { full_name: body.full_name, email: body.email, nip: body.nip, is_active: body.is_active },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
+
     return NextResponse.json({ data: user });
-  } catch (error) {
+  } catch (error: any) {
+    const msg = DUPLICATE_MESSAGES[error.message];
+    if (msg) {
+      return NextResponse.json({ error: msg }, { status: 409 });
+    }
     return NextResponse.json({ error: 'Gagal mengupdate musyrif' }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const session = await getSession();
+    const denied = requireAdmin(session);
+    if (denied) return denied;
+
+    const oldUser = await getUserById(params.id);
     await deleteUser(params.id);
+    await createAuditLog({
+      userId: session!.userId,
+      action: 'DELETE',
+      entityType: 'user',
+      entityId: params.id,
+      oldValues: oldUser ? { full_name: oldUser.full_name, email: oldUser.email, role: oldUser.role } : null,
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Gagal menghapus musyrif' }, { status: 500 });

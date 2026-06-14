@@ -1,15 +1,16 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Sidebar from '@/components/ui/sidebar';
-import Navbar from '@/components/ui/navbar';
+
 import { useSettings } from '@/lib/hooks/useSettings';
 import {
   Award, Search, Filter, Plus, Eye, Download, Send,
   Save, X, CheckCircle2, AlertCircle, Clock, FileText,
   Users, BookMarked, RefreshCw, GraduationCap, Star
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const SertifikatModal = dynamic(() => import('@/components/dashboard/admin/SertifikatModal'), { ssr: false });
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ interface TargetRecord {
   progres: number; statusLulus: string; catatan?: string; updatedAt: string;
 }
 
-interface HafalanRecord {
+interface TahsinRecord {
   id: string; santriId: string; santriName: string; nis: string;
   surah: string; tajwid: number; makhraj: number; kelancaran: number;
   rata: number; status: string; createdAt: string;
@@ -50,7 +51,7 @@ function generateNomor(existing: SertifikatRecord[]): string {
   return `BH/SRT/${yr}/${String(next).padStart(3, '0')}`;
 }
 
-function avgHafalan(records: HafalanRecord[], santriId: string) {
+function avgTahsin(records: TahsinRecord[], santriId: string) {
   const mine = records.filter(r => r.santriId === santriId || r.nis === santriId);
   if (mine.length === 0) return { tajwid: 0, makhraj: 0, kelancaran: 0, rata: 0 };
   const sum = mine.reduce((a, r) => ({
@@ -92,12 +93,11 @@ const DEFAULT_FORM: FormSettings = {
 
 export default function ManajemenSertifikat() {
   const { settings } = useSettings();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Data
   const [santriList,    setSantriList]    = useState<Santri[]>([]);
   const [targetRecords, setTargetRecords] = useState<TargetRecord[]>([]);
-  const [hafalanRecs,   setHafalanRecs]   = useState<HafalanRecord[]>([]);
+  const [TahsinRecs,   setTahsinRecs]   = useState<TahsinRecord[]>([]);
   const [sertifikatRecs,setSertifikatRecs]= useState<SertifikatRecord[]>([]);
 
   // Filter
@@ -147,7 +147,7 @@ export default function ManajemenSertifikat() {
         setSantriList(mappedSantri);
       }
       const setoranJson = await setoranRes.json();
-      if (setoranJson.data) setHafalanRecs(setoranJson.data);
+      if (setoranJson.data) setTahsinRecs(setoranJson.data);
       const sertifikatJson = await sertifikatRes.json();
       if (sertifikatJson.data) {
         const mapped = sertifikatJson.data.map((r: any) => ({
@@ -205,7 +205,7 @@ export default function ManajemenSertifikat() {
   // ── Buka Modal ───────────────────────────────────────────────────────────────
   const openModal = (santri: Santri) => {
     const target  = targetRecords.find(r => r.santriId === santri.id) || null;
-    const nilai   = avgHafalan(hafalanRecs, santri.id);
+    const nilai   = avgTahsin(TahsinRecs, santri.id);
     const existing = sertifikatRecs.find(r => r.santriId === santri.id) || null;
 
     setModalSantri(santri);
@@ -224,7 +224,7 @@ export default function ManajemenSertifikat() {
       setFTanggal(existing.tanggalTerbit);
     } else {
       setFParagraf(
-        `Telah berhasil menyelesaikan hafalan Al-Quran dengan baik sesuai kaidah Tajwid yang benar ` +
+        `Telah berhasil menyelesaikan Tahsin Al-Quran dengan baik sesuai kaidah Tajwid yang benar ` +
         `di ${settings.appName}. Sertifikat ini diberikan sebagai penghargaan atas dedikasi dan ` +
         `ketekunan dalam menghafal Kitabullah.`
       );
@@ -424,31 +424,26 @@ export default function ManajemenSertifikat() {
 
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-tosca-50/30">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
-      <div className="lg:pl-72 transition-all duration-300">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
-
+    <>
         <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
 
           {/* ── Toast ── */}
           {notif && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 bg-slate-900/95 backdrop-blur text-white px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4 max-w-sm">
-              <CheckCircle2 className="text-teal-400 shrink-0" size={18} />
-              <span className="text-xs font-extrabold">{notif}</span>
+              <CheckCircle2 className="text-surface-400 shrink-0" size={18} />
+              <span className="text-xs font-bold">{notif}</span>
             </div>
           )}
 
           {/* ── Header ── */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-tosca-50 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-surface-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-tosca-900 flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900 flex items-center gap-3">
                 <Award className="text-amber-500" size={32} />
                 Manajemen Sertifikat
               </h1>
               <p className="text-tosca-600 font-semibold text-sm">
-                Buat, pratinjau, dan terbitkan sertifikat hafalan santri dalam format PDF.
+                Buat, pratinjau, dan terbitkan sertifikat Tahsin santri dalam format PDF.
               </p>
             </div>
             {/* Filter Kelas */}
@@ -468,37 +463,37 @@ export default function ManajemenSertifikat() {
           {/* ── Stats Cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { label: 'Total Santri',    val: santriList.length, icon: Users,     bg: 'bg-tosca-100', color: 'text-tosca-600',  unit: 'Santri' },
+              { label: 'Total Siswa',    val: santriList.length, icon: Users,     bg: 'bg-tosca-100', color: 'text-tosca-600',  unit: 'Siswa' },
               { label: 'Sudah Terbit',    val: totalTerbit,       icon: CheckCircle2, bg: 'bg-emerald-100', color: 'text-emerald-600', unit: 'Sertifikat' },
-              { label: 'Draft / Belum',   val: totalDraft + (santriList.length - sertifikatRecs.length), icon: FileText, bg: 'bg-amber-100', color: 'text-amber-600', unit: 'Santri' },
+              { label: 'Draft / Belum',   val: totalDraft + (santriList.length - sertifikatRecs.length), icon: FileText, bg: 'bg-amber-100', color: 'text-amber-600', unit: 'Siswa' },
             ].map(item => (
-              <div key={item.label} className="bg-white p-5 rounded-2xl border border-tosca-50 shadow-sm flex items-center gap-4">
+              <div key={item.label} className="bg-white p-5 rounded-2xl border border-surface-100 shadow-sm flex items-center gap-4">
                 <div className={`h-12 w-12 rounded-xl ${item.bg} ${item.color} flex items-center justify-center`}>
                   <item.icon size={22} />
                 </div>
                 <div>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{item.label}</p>
-                  <p className="text-2xl font-black text-slate-900">{item.val} <span className="text-sm font-bold text-slate-400">{item.unit}</span></p>
+                  <p className="text-2xl font-bold text-slate-900">{item.val} <span className="text-sm font-bold text-slate-400">{item.unit}</span></p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* ── Tabel Utama ── */}
-          <div className="bg-white rounded-3xl border border-tosca-50 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl border border-surface-100 shadow-sm overflow-hidden">
             {/* Search bar */}
-            <div className="p-5 border-b border-tosca-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <h3 className="text-sm font-black text-tosca-900 flex items-center gap-2">
-                <GraduationCap className="text-tosca-600" size={18} /> Daftar Santri
+            <div className="p-5 border-b border-surface-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <h3 className="text-sm font-bold text-tosca-900 flex items-center gap-2">
+                <GraduationCap className="text-tosca-600" size={18} /> Daftar Siswa
               </h3>
               <div className="relative w-full sm:max-w-xs">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tosca-400" size={16} />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400" size={16} />
                 <input
                   type="text"
                   placeholder="Cari nama / NIS..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-tosca-200 rounded-2xl text-xs font-bold text-black placeholder:text-tosca-400 focus:ring-2 focus:ring-tosca-500 focus:outline-none shadow-sm"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-tosca-200 rounded-2xl text-xs font-bold text-black placeholder:text-surface-400 focus:ring-2 focus:ring-tosca-500 focus:outline-none shadow-sm"
                 />
               </div>
             </div>
@@ -506,7 +501,7 @@ export default function ManajemenSertifikat() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-tosca-50/40 border-b border-tosca-100 text-[10px] font-black text-tosca-400 uppercase tracking-widest">
+                  <tr className="bg-tosca-50/40 border-b border-tosca-100 text-[10px] font-bold text-surface-400 uppercase tracking-widest">
                     <th className="py-4 px-5 text-center w-12">No</th>
                     <th className="py-4 px-5">NIS / NISN</th>
                     <th className="py-4 px-5">Nama Lengkap</th>
@@ -529,26 +524,26 @@ export default function ManajemenSertifikat() {
                       <tr key={santri.id} className="hover:bg-tosca-50/20 transition-all">
                         <td className="py-4 px-5 text-center font-bold text-slate-400">{idx + 1}</td>
                         <td className="py-4 px-5">
-                          <p className="font-extrabold text-slate-800">{santri.nis}</p>
+                          <p className="font-bold text-slate-800">{santri.nis}</p>
                           <p className="text-[9px] text-slate-400">NISN: {santri.nisn}</p>
                         </td>
-                        <td className="py-4 px-5 font-black text-slate-900">{santri.nama_lengkap}</td>
+                        <td className="py-4 px-5 font-bold text-slate-900">{santri.nama_lengkap}</td>
                         <td className="py-4 px-5">
-                          <span className="px-2 py-0.5 bg-tosca-50 text-tosca-700 border border-tosca-100 rounded font-extrabold text-[9px] uppercase">
+                          <span className="px-2 py-0.5 bg-tosca-50 text-tosca-700 border border-tosca-100 rounded font-bold text-[9px] uppercase">
                             {santri.kelas_nama}
                           </span>
                         </td>
                         <td className="py-4 px-5">
                           {target?.namaSurat ? (
                             <div className="flex items-center gap-1.5">
-                              <BookMarked className="text-tosca-400 shrink-0" size={12} />
+                              <BookMarked className="text-surface-400 shrink-0" size={12} />
                               <span className="font-bold text-slate-700">{target.namaSurat}</span>
                             </div>
                           ) : <span className="text-slate-300">—</span>}
                         </td>
                         <td className="py-4 px-5 text-center">
                           {target ? (
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border text-[9px] font-black uppercase ${stCfg.badge}`}>
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border text-[9px] font-bold uppercase ${stCfg.badge}`}>
                               <span className={`h-1.5 w-1.5 rounded-full ${stCfg.dot}`} />
                               {target.statusLulus}
                             </span>
@@ -557,11 +552,11 @@ export default function ManajemenSertifikat() {
                         <td className="py-4 px-5 text-center">
                           {sertif ? (
                             sertif.isPublished ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border bg-emerald-50 text-emerald-700 border-emerald-200 text-[9px] font-black uppercase">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border bg-emerald-50 text-emerald-700 border-emerald-200 text-[9px] font-bold uppercase">
                                 ✅ Terbit
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border bg-slate-50 text-slate-500 border-slate-200 text-[9px] font-black uppercase">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border bg-slate-50 text-slate-500 border-slate-200 text-[9px] font-bold uppercase">
                                 💾 Draft
                               </span>
                             )
@@ -572,7 +567,7 @@ export default function ManajemenSertifikat() {
                         <td className="py-4 px-5 text-center">
                           <button
                             onClick={() => openModal(santri)}
-                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all ${
+                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wide transition-all ${
                               sertif
                                 ? 'bg-slate-100 text-slate-600 hover:bg-tosca-100 hover:text-tosca-700'
                                 : 'bg-tosca-600 text-white hover:bg-tosca-700 shadow-sm'
@@ -590,219 +585,35 @@ export default function ManajemenSertifikat() {
             </div>
           </div>
         </main>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════
-          MODAL BUAT / EDIT SERTIFIKAT
-      ══════════════════════════════════════════════════════ */}
       {isModalOpen && modalSantri && (
-        <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-6 px-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
-
-            {/* Modal Header */}
-            <div className="p-5 bg-gradient-to-r from-tosca-900 to-teal-800 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] text-teal-300 font-extrabold uppercase tracking-widest mb-0.5">
-                  {modalExisting ? (modalExisting.isPublished ? '✅ Sudah Terbit' : '💾 Draft') : '✨ Buat Baru'}
-                </p>
-                <h2 className="text-base font-black text-white flex items-center gap-2">
-                  <Award size={18} className="text-amber-400" />
-                  Sertifikat — {modalSantri.nama_lengkap}
-                </h2>
-                {modalExisting && (
-                  <p className="text-[10px] text-teal-300 mt-0.5">No. {modalExisting.nomorSertifikat}</p>
-                )}
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-white/70 hover:text-white transition-colors">
-                <X size={22} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-
-              {/* ── Data Otomatis Santri ── */}
-              <div className="bg-tosca-50/50 rounded-2xl border border-tosca-100 p-4 space-y-3">
-                <p className="text-[10px] font-black text-tosca-500 uppercase tracking-widest">Data Santri (Otomatis)</p>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: 'Nama Lengkap', val: modalSantri.nama_lengkap },
-                    { label: 'NIS', val: modalSantri.nis },
-                    { label: 'Kelas', val: modalSantri.kelas_nama },
-                  ].map(item => (
-                    <div key={item.label} className="bg-white rounded-xl p-3 border border-tosca-100">
-                      <p className="text-[9px] text-tosca-400 font-bold uppercase">{item.label}</p>
-                      <p className="text-xs font-black text-slate-800 mt-1 truncate">{item.val}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── Data Target & Nilai ── */}
-              <div className="bg-fuchsia-50/40 rounded-2xl border border-fuchsia-100 p-4 space-y-3">
-                <p className="text-[10px] font-black text-fuchsia-600 uppercase tracking-widest">Data Hafalan (dari Target & Setoran)</p>
-                {modalTarget ? (
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: 'Nama Surat', val: modalTarget.namaSurat },
-                      { label: 'Juz ke-', val: modalTarget.juzTarget },
-                      { label: 'Status', val: modalTarget.statusLulus },
-                    ].map(item => (
-                      <div key={item.label} className="bg-white rounded-xl p-3 border border-fuchsia-100">
-                        <p className="text-[9px] text-fuchsia-400 font-bold uppercase">{item.label}</p>
-                        <p className="text-xs font-black text-slate-800 mt-1">{item.val}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
-                    <AlertCircle className="text-amber-500 shrink-0" size={16} />
-                    <p className="text-xs text-amber-700 font-semibold">
-                      Belum ada data target. Musyrif perlu mengisi Target Hafalan terlebih dahulu.
-                    </p>
-                  </div>
-                )}
-                {/* Nilai */}
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { label: 'Tajwid',     val: modalNilai.tajwid },
-                    { label: 'Makhraj',    val: modalNilai.makhraj },
-                    { label: 'Kelancaran', val: modalNilai.kelancaran },
-                    { label: 'Rata-rata',  val: modalNilai.rata },
-                  ].map(item => (
-                    <div key={item.label} className={`rounded-xl p-3 border text-center ${item.label === 'Rata-rata' ? 'bg-tosca-50 border-tosca-200' : 'bg-white border-fuchsia-100'}`}>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase">{item.label}</p>
-                      <p className={`text-lg font-black mt-1 ${item.label === 'Rata-rata' ? 'text-tosca-700' : 'text-slate-800'}`}>{item.val || '—'}</p>
-                    </div>
-                  ))}
-                </div>
-                {hafalanRecs.filter(r => r.santriId === modalSantri.id).length === 0 && (
-                  <p className="text-[10px] text-slate-400 font-semibold italic text-center">
-                    * Nilai 0 karena belum ada data setoran hafalan untuk santri ini.
-                  </p>
-                )}
-              </div>
-
-              {/* ── Input: Data Sekolah ── */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Data Kop Sertifikat</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Alamat Sekolah / Pondok</label>
-                    <input
-                      type="text"
-                      placeholder="Jl. Contoh No. 1, Kota, Provinsi"
-                      value={fAlamat}
-                      onChange={e => setFAlamat(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-tosca-500"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Akreditasi</label>
-                    <select
-                      value={fAkreditasi}
-                      onChange={e => setFAkreditasi(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-tosca-500"
-                    >
-                      {['A','B','C','Belum Terakreditasi'].map(v => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Input: Paragraf Teks ── */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                  Paragraf Teks Sertifikat
-                </label>
-                <textarea
-                  rows={4}
-                  value={fParagraf}
-                  onChange={e => setFParagraf(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-tosca-500 resize-none leading-relaxed"
-                />
-              </div>
-
-              {/* ── Input: Data TTD ── */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Data Penandatanganan</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Kota Penandatangan</label>
-                    <input type="text" placeholder="Palembang" value={fKota} onChange={e => setFKota(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-tosca-500" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Tanggal Terbit</label>
-                    <input type="text" placeholder="03 Juni 2026" value={fTanggal} onChange={e => setFTanggal(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-tosca-500" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Nama Penanggung Jawab</label>
-                    <input type="text" placeholder="Ust. Ahmad, S.Pd.I" value={fNamaTTD} onChange={e => setFNamaTTD(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-tosca-500" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Jabatan</label>
-                    <input type="text" placeholder="Kepala Pondok" value={fJabatan} onChange={e => setFJabatan(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-tosca-500" />
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Modal Footer — Tombol Aksi */}
-            <div className="p-5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center gap-3">
-              {/* Preview */}
-              <button
-                onClick={() => handlePDF('preview')}
-                disabled={isPDFLoading}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase hover:bg-slate-100 transition-all disabled:opacity-50"
-              >
-                <Eye size={14} /> Preview
-              </button>
-
-              {/* Unduh PDF */}
-              <button
-                onClick={() => handlePDF('download')}
-                disabled={isPDFLoading}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-tosca-200 text-tosca-700 rounded-xl text-xs font-black uppercase hover:bg-tosca-50 transition-all disabled:opacity-50"
-              >
-                <Download size={14} />
-                {isPDFLoading ? 'Memproses...' : 'Unduh PDF'}
-              </button>
-
-              {/* Spacer */}
-              <div className="flex-1" />
-
-              {/* Simpan Draft */}
-              <button
-                onClick={handleSimpanDraft}
-                className="flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase transition-all"
-              >
-                <Save size={14} /> Simpan Draft
-              </button>
-
-              {/* Cabut / Terbitkan */}
-              {modalExisting?.isPublished ? (
-                <button
-                  onClick={handleCabutTerbit}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase transition-all"
-                >
-                  <X size={14} /> Cabut Terbit
-                </button>
-              ) : (
-                <button
-                  onClick={handleTerbitkan}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase transition-all shadow-md"
-                >
-                  <Send size={14} /> Terbitkan
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <SertifikatModal
+          modalSantri={modalSantri}
+          modalTarget={modalTarget}
+          modalNilai={modalNilai}
+          modalExisting={modalExisting}
+          isPDFLoading={isPDFLoading}
+          onClose={() => setIsModalOpen(false)}
+          fParagraf={fParagraf}
+          setFParagraf={setFParagraf}
+          fAlamat={fAlamat}
+          setFAlamat={setFAlamat}
+          fAkreditasi={fAkreditasi}
+          setFAkreditasi={setFAkreditasi}
+          fNamaTTD={fNamaTTD}
+          setFNamaTTD={setFNamaTTD}
+          fJabatan={fJabatan}
+          setFJabatan={setFJabatan}
+          fKota={fKota}
+          setFKota={setFKota}
+          fTanggal={fTanggal}
+          setFTanggal={setFTanggal}
+          handlePDF={handlePDF}
+          handleSimpanDraft={handleSimpanDraft}
+          handleTerbitkan={handleTerbitkan}
+          handleCabutTerbit={handleCabutTerbit}
+          hasTahsinData={TahsinRecs.filter(r => r.santriId === modalSantri.id).length > 0}
+        />
       )}
-    </div>
+    </>
   );
 }

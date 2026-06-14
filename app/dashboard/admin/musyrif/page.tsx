@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import Sidebar from '@/components/ui/sidebar';
-import Navbar from '@/components/ui/navbar';
+import React, { useState, useRef, useMemo } from 'react';
+import { useMusyrifList, useCreateMusyrif } from '@/lib/hooks/useApi';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
   Search,
@@ -35,12 +35,8 @@ interface Musyrif {
   password: string;
   is_active: boolean;
   created_at: string;
+  level_program: string;
 }
-
-// Initial Musyrif data
-const initialMusyrif: Musyrif[] = [];
-// Initial accounts for login
-const initialAccounts: any[] = [];
 
 // Simple hash function
 function simpleHash(str: string): string {
@@ -54,7 +50,7 @@ function simpleHash(str: string): string {
 }
 
 export default function ManajemenMusyrif() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -63,7 +59,6 @@ export default function ManajemenMusyrif() {
   const [toastMessage, setToastMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -74,37 +69,29 @@ export default function ManajemenMusyrif() {
     no_wa: '',
     username: '',
     password: '',
+    level_program: 'TAHSIN',
   });
 
-  const [musyrifList, setMusyrifList] = useState<Musyrif[]>([]);
+  const qc = useQueryClient();
+  const { data: musyrifData } = useMusyrifList();
+  const createMusyrif = useCreateMusyrif();
 
-  const loadMusyrif = async () => {
-    try {
-      const res = await fetch('/api/musyrif');
-      const json = await res.json();
-      if (json.data) {
-        setMusyrifList((json.data || []).map((m: any) => ({
-          id: m.id,
-          nip: m.nip || '',
-          nama_lengkap: m.full_name || '',
-          kelas_id: m.kelas_id || '',
-          kelas_nama: m.kelas_nama || '',
-          email: m.email || '',
-          no_wa: m.no_wa || '',
-          username: m.username || '',
-          password: '',
-          is_active: m.is_active,
-          created_at: m.created_at || '',
-        })));
-      }
-    } catch (err) {
-      console.error('Failed to load musyrif', err);
-    }
-  };
-
-  useEffect(() => {
-    loadMusyrif();
-  }, []);
+  const musyrifList: Musyrif[] = useMemo(() => {
+    if (!musyrifData?.data) return [];
+    return musyrifData.data.map((m: any) => ({
+      id: m.id,
+      nip: m.nip || '',
+      nama_lengkap: m.full_name || '',
+      kelas_id: m.kelas_id || '',
+      kelas_nama: m.kelas_nama || '',
+      email: m.email || '',
+      no_wa: m.no_wa || '',
+      username: m.username || '',
+      password: '',
+      is_active: m.is_active,
+      created_at: m.created_at || '',
+    }));
+  }, [musyrifData]);
 
   // Generate NIP
   const generateNIP = () => {
@@ -144,6 +131,7 @@ export default function ManajemenMusyrif() {
       no_wa: '',
       username: '',
       password: '',
+      level_program: 'TAHSIN',
     });
     setShowPassword(false);
     setEditingMusyrif(null);
@@ -170,6 +158,7 @@ export default function ManajemenMusyrif() {
       no_wa: musyrif.no_wa,
       username: musyrif.username,
       password: '',
+      level_program: musyrif.level_program || 'TAHSIN',
     });
     setIsModalOpen(true);
   };
@@ -197,33 +186,29 @@ export default function ManajemenMusyrif() {
             full_name: formData.nama_lengkap,
             no_wa: formData.no_wa,
             username: formData.username,
+            level_program: formData.level_program,
             ...(formData.email ? { email: formData.email } : {}),
             ...(formData.password ? { password: formData.password } : {}),
           }),
         });
         if (!res.ok) throw new Error('Failed to update');
-        triggerToast('Data Musyrif Berhasil Diperbarui!');
+        triggerToast('Data Guru Berhasil Diperbarui!');
+        qc.invalidateQueries({ queryKey: ['musyrif'] } as any);
       } else {
-        const res = await fetch('/api/musyrif', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-            full_name: formData.nama_lengkap,
-            nip: formData.nip,
-            username: formData.username,
-            no_wa: formData.no_wa,
-          }),
+        await createMusyrif.mutateAsync({
+          email: formData.email,
+          password: formData.password,
+          full_name: formData.nama_lengkap,
+          nip: formData.nip,
+          username: formData.username,
+          no_wa: formData.no_wa,
+          level_program: formData.level_program,
         });
-        if (!res.ok) throw new Error('Failed to create');
-        triggerToast(`Musyrif "${formData.nama_lengkap}" berhasil ditambahkan!`);
+        triggerToast(`Guru "${formData.nama_lengkap}" berhasil ditambahkan!`);
       }
-
-      await loadMusyrif();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save failed', err);
-      triggerToast('Gagal menyimpan data musyrif.');
+      triggerToast(err.message || 'Gagal menyimpan data guru.');
     }
 
     setIsLoading(false);
@@ -232,15 +217,15 @@ export default function ManajemenMusyrif() {
   };
 
   const handleDelete = async (id: string, nama: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus data Musyrif "${nama}"?\nAkun login juga akan dihapus.`)) {
+    if (confirm(`Apakah Anda yakin ingin menghapus data Guru "${nama}"?\nAkun login juga akan dihapus.`)) {
       try {
         const res = await fetch(`/api/musyrif/${id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Failed to delete');
-        triggerToast('Data Musyrif Berhasil Dihapus!');
-        await loadMusyrif();
+        triggerToast('Data Guru Berhasil Dihapus!');
+        qc.invalidateQueries({ queryKey: ['musyrif'] } as any);
       } catch (err) {
         console.error('Delete failed', err);
-        triggerToast('Gagal menghapus data musyrif.');
+        triggerToast('Gagal menghapus data guru.');
       }
     }
   };
@@ -271,28 +256,23 @@ export default function ManajemenMusyrif() {
     if (file) {
       triggerToast(`File "${file.name}" berhasil diupload.`);
       setTimeout(() => {
-        triggerToast('Data Musyrif Berhasil Diimpor!');
+        triggerToast('Data Guru Berhasil Diimpor!');
       }, 1500);
     }
   };
 
   return (
-    <div className="min-h-screen bg-tosca-50/30">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
-      <div className="lg:pl-72 transition-all duration-300">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+    <>
+      <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {/* Header Card */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-tosca-50 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-surface-100 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-purple-100 rounded-2xl">
                 <Users size={28} className="text-purple-600" />
               </div>
               <div className="space-y-1">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-tosca-900">Manajemen Musyrif/ah</h1>
-                <p className="text-tosca-600 font-medium">Kelola data & akun login ustadz/ustadzah Baitul Huffaz.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900">Manajemen Guru</h1>
+                <p className="text-tosca-600 font-medium">Kelola data & akun login Guru Baitul Huffaz.</p>
               </div>
             </div>
             {showToast && (
@@ -311,13 +291,13 @@ export default function ManajemenMusyrif() {
             <div>
               <p className="text-sm font-bold text-purple-800">Informasi Penting</p>
               <p className="text-xs text-purple-600 mt-1">
-                Musyrif yang didaftarkan akan otomatis memiliki akun login. Username dan password default bisa diubah kemudian.
+                Guru yang didaftarkan akan otomatis memiliki akun login. Username dan password default bisa diubah kemudian.
               </p>
             </div>
           </div>
 
           {/* Action Bar */}
-          <div className="bg-white p-4 rounded-3xl border border-tosca-50 shadow-sm mb-6">
+          <div className="bg-white p-4 rounded-3xl border border-surface-100 shadow-sm mb-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -345,13 +325,13 @@ export default function ManajemenMusyrif() {
 
               <div className="flex items-center gap-3">
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-tosca-400">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
                     <Search size={18} />
                   </div>
                   <input
                     type="text"
                     placeholder="Cari NIP, Nama, Username..."
-                    className="pl-10 pr-4 py-2 bg-tosca-50/50 border border-tosca-100 rounded-xl text-sm text-[#0B7D72] focus:ring-2 focus:ring-tosca-500 focus:border-tosca-500 transition-all w-full sm:w-64"
+                    className="pl-10 pr-4 py-2 bg-tosca-50/50 border border-tosca-100 rounded-xl text-sm text-[#0B7D72] focus:ring-2 focus:ring-tosca-500 focus:border-surface-1000 transition-all w-full sm:w-64"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -361,14 +341,14 @@ export default function ManajemenMusyrif() {
                   className="flex items-center gap-2 px-4 py-2 bg-tosca-900 text-white rounded-xl font-semibold text-sm hover:bg-black transition-all shadow-md"
                 >
                   <Plus size={18} />
-                  <span className="hidden sm:inline">Tambah Musyrif</span>
+                  <span className="hidden sm:inline">Tambah Guru</span>
                 </button>
               </div>
             </div>
           </div>
 
           {/* Table Section */}
-          <div className="bg-white rounded-3xl border border-tosca-50 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl border border-surface-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -385,7 +365,7 @@ export default function ManajemenMusyrif() {
                 <tbody className="divide-y divide-tosca-50">
                   {filteredMusyrif.length > 0 ? (
                     filteredMusyrif.map((m, index) => (
-                      <tr key={m.id} className="hover:bg-tosca-50/30 transition-colors group">
+                      <tr key={m.id} className="hover:bg-surface-50 transition-colors group">
                         <td className="px-4 py-3 text-sm font-medium text-tosca-500">{index + 1}</td>
                         <td className="px-4 py-3 text-sm font-medium text-tosca-800">{m.nip}</td>
                         <td className="px-4 py-3 text-sm font-bold text-tosca-900">{m.nama_lengkap}</td>
@@ -430,7 +410,7 @@ export default function ManajemenMusyrif() {
                             >
                               <Trash2 size={16} />
                             </button>
-                            <button className="p-1.5 text-tosca-400 hover:bg-tosca-50 rounded-lg">
+                            <button className="p-1.5 text-surface-400 hover:bg-tosca-50 rounded-lg">
                               <MoreVertical size={16} />
                             </button>
                           </div>
@@ -440,7 +420,7 @@ export default function ManajemenMusyrif() {
                   ) : (
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center text-tosca-500 font-medium italic">
-                        Tidak ada musyrif yang ditemukan dengan kata kunci "{searchTerm}"
+                        Tidak ada guru yang ditemukan dengan kata kunci "{searchTerm}"
                       </td>
                     </tr>
                   )}
@@ -449,8 +429,8 @@ export default function ManajemenMusyrif() {
             </div>
 
             {/* Pagination */}
-            <div className="px-6 py-4 bg-tosca-50/20 border-t border-tosca-50 flex items-center justify-between text-sm text-tosca-500 font-medium">
-              <p>Menampilkan {filteredMusyrif.length} dari {filteredMusyrif.length} musyrif</p>
+            <div className="px-6 py-4 bg-tosca-50/20 border-t border-surface-100 flex items-center justify-between text-sm text-tosca-500 font-medium">
+              <p>Menampilkan {filteredMusyrif.length} dari {filteredMusyrif.length} guru</p>
               <div className="flex gap-2">
                 <button className="px-3 py-1.5 border border-tosca-100 rounded-lg hover:bg-white transition-colors disabled:opacity-50" disabled>Sebelumnya</button>
                 <button className="px-3 py-1.5 border border-tosca-100 rounded-lg hover:bg-white transition-colors bg-tosca-50">1</button>
@@ -460,22 +440,21 @@ export default function ManajemenMusyrif() {
             </div>
           </div>
         </main>
-      </div>
 
       {/* Modal Tambah/Edit Musyrif */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 my-8">
-            <div className="flex items-center justify-between p-6 border-b border-tosca-50 bg-tosca-50/20">
+            <div className="flex items-center justify-between p-6 border-b border-surface-100 bg-tosca-50/20">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-600 rounded-xl text-white">
                   <UserPlus size={20} />
                 </div>
                 <h2 className="text-xl font-bold text-tosca-900">
-                  {isEditMode ? 'Edit Data Musyrif' : 'Tambah Musyrif Baru'}
+                  {isEditMode ? 'Edit Data Guru' : 'Tambah Guru Baru'}
                 </h2>
               </div>
-              <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="text-tosca-400 hover:text-tosca-600 transition-colors">
+              <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="text-surface-400 hover:text-tosca-600 transition-colors">
                 <X size={24} />
               </button>
             </div>
@@ -505,7 +484,7 @@ export default function ManajemenMusyrif() {
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
-                  placeholder="Nama lengkap ustadz/ustadzah"
+                  placeholder="Nama lengkap guru"
                 />
               </div>
 
@@ -537,9 +516,26 @@ export default function ManajemenMusyrif() {
                 </div>
               </div>
 
+              {/* Level Program */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-tosca-700 ml-1">Level Program</label>
+                <select
+                  name="level_program"
+                  value={formData.level_program}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
+                >
+                  <option value="BTQ_PEMULA">BTQ Pemula (BTQ1)</option>
+                  <option value="BTQ_LANJUTAN">BTQ Lanjutan (BTQ2)</option>
+                  <option value="TAHSIN">Tahsin</option>
+                  <option value="TAHFIDZ">Tahfidz</option>
+                  <option value="MUROJAAH">Murojaah</option>
+                </select>
+              </div>
+
               {/* Info Akun Login */}
               <div className="bg-purple-50/50 rounded-2xl p-4 border border-purple-100">
-                <p className="text-xs font-bold text-purple-700 mb-3">AKUN LOGIN MUSYRIF</p>
+                <p className="text-xs font-bold text-purple-700 mb-3">AKUN LOGIN GURU</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-tosca-700 ml-1">Username</label>
@@ -568,7 +564,7 @@ export default function ManajemenMusyrif() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-tosca-400 hover:text-tosca-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-tosca-600"
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -605,7 +601,7 @@ export default function ManajemenMusyrif() {
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      {isEditMode ? 'Simpan Perubahan' : 'Simpan Musyrif'}
+                      {isEditMode ? 'Simpan Perubahan' : 'Simpan Guru'}
                     </>
                   )}
                 </button>
@@ -614,6 +610,6 @@ export default function ManajemenMusyrif() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

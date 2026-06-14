@@ -27,7 +27,7 @@ Santri  ──→ Read-only (kecuali profil sendiri)
 | Musyrif | Tambah/edit/hapus musyrif + akun login | CRUD via `/api/musyrif`; tiap musyrif terkait dengan kelas |
 | Kelas | Tambah/edit/hapus kelas | CRUD via `/api/kelas`; kelas jadi referensi santri & jadwal |
 | Nilai | Lihat nilai semua santri per kelas | Read dari `/api/nilai` (aggregasi setoran + absensi) |
-| Hafalan | Rekap setoran hafalan | Read dari `/api/setoran` |
+| Tahsin | Rekap setoran Tahsin | Read dari `/api/setoran` |
 | Kehadiran | Rekap absensi | Read dari `/api/absensi` |
 | Jadwal | Atur jadwal kelas | CRUD via `/api/jadwal`; jadwal tampil di dashboard & role lain |
 | Sertifikat | Kelola sertifikat, publish/unpublish | CRUD via `/api/sertifikat`; trigger `syncSertifikatRecords` untuk bulk upsert |
@@ -62,12 +62,12 @@ Admin buat Informasi   ──→ Tampil di dashboard role target
 |---------|--------|-----------|
 | Dashboard | Ringkasan kelas binaan, jadwal, aktivitas | Fetch profil via `/api/musyrif/{id}` untuk dapat `kelas_id`; filter data berdasarkan kelas |
 | Jadwal | Lihat jadwal mengajar | Read `/api/jadwal` |
-| Setoran | Input setoran hafalan santri | Create & Read via `/api/setoran`; data masuk ke riwayat hafalan |
+| Setoran | Input setoran Tahsin santri | Create & Read via `/api/setoran`; data masuk ke riwayat Tahsin |
 | Input Nilai | Input nilai santri | Read setoran + write evaluasi via `/api/evaluasi` |
 | Presensi | Absensi santri | Create & Read via `/api/absensi` |
-| Status | Status hafalan santri | Read aggregasi data setoran |
+| Status | Status Tahsin santri | Read aggregasi data setoran |
 | Evaluasi | Catatan evaluasi santri | CRUD via `/api/evaluasi` |
-| Target | Lihat & update target hafalan | Read/write via `/api/target` |
+| Target | Lihat & update target Tahsin | Read/write via `/api/target` |
 | Sertifikat | Lihat sertifikat santri binaan | Read `/api/sertifikat` filter by `kelas_id`; hanya yang `isPublished` |
 | Informasi | Lihat pengumuman | Read `/api/informasi` filter `target_role = MUSYRIF` atau `ALL` |
 | Kelas Virtual | Link Zoom/meeting | Read dari `/api/zoom-meetings` |
@@ -76,10 +76,10 @@ Admin buat Informasi   ──→ Tampil di dashboard role target
 ### Alur Bisnis Musyrif
 
 1. **Masuk**: Login → Dashboard menampilkan data sesuai kelas binaan
-2. **Setoran**: Setiap pertemuan, Musyrif mencatat setoran hafalan (tajwid, makhraj, kelancaran score, status LANJUT/ULANGI)
+2. **Setoran**: Setiap pertemuan, Musyrif mencatat setoran Tahsin (tajwid, makhraj, kelancaran score, status LANJUT/ULANGI)
 3. **Presensi**: Mencatat kehadiran santri setiap pertemuan
 4. **Nilai**: Memberikan evaluasi nilai berdasarkan setoran & absensi
-5. **Target**: Memantau & memperbarui target hafalan santri
+5. **Target**: Memantau & memperbarui target Tahsin santri
 
 ### Diagram Alur Data
 
@@ -107,7 +107,7 @@ Login ──→ Fetch profil (dapat kelas_id)
 | Nilai | Lihat nilai & raport | Read `/api/nilai` filter by `santri_id` (aggregasi setoran & absensi) |
 | Sertifikat | Lihat sertifikat yang sudah publish | Read `/api/sertifikat` filter by `santri_id` + `isPublished` |
 | Evaluasi | Lihat evaluasi dari musyrif | Read `/api/evaluasi` filter by `santri_id` |
-| Target | Lihat target hafalan | Read `/api/target` filter by `santri_id` |
+| Target | Lihat target Tahsin | Read `/api/target` filter by `santri_id` |
 | Informasi | Lihat pengumuman | Read `/api/informasi` filter `target_role = SANTRI` atau `ALL` |
 | Kelas Virtual | Link Zoom/meeting | Read `/api/zoom-meetings` |
 | Profil | Lihat & edit profil | Read/write `/api/santri/{id}` |

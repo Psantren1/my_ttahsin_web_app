@@ -8,6 +8,7 @@ export interface User {
   email: string;
   fullName: string;
   role: 'ADMIN' | 'MUSYRIF' | 'SANTRI';
+  levelProgram?: string | null;
   username?: string;
   nip?: string;
   nis?: string;
@@ -16,8 +17,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (emailOrUsername: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  login: (emailOrUsername: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  logout: () => Promise<void>;
   getSantriList: () => Promise<User[]>;
   getMusyrifList: () => Promise<User[]>;
   addSantri: (santri: User & { password: string }) => Promise<{ success: boolean; error?: string }>;
@@ -33,18 +34,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('baitul_user');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
+    fetch('/api/auth/me')
+      .then(res => {
+        if (!res.ok) throw new Error('Not authenticated');
+        return res.json();
+      })
+      .then(data => {
+        if (data?.data) {
+          setUser(data.data);
+          localStorage.setItem('baitul_user', JSON.stringify(data.data));
+        }
+      })
+      .catch(() => {
         localStorage.removeItem('baitul_user');
-      }
-    }
-    setIsLoading(false);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
@@ -55,28 +62,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (!res.ok) {
         setIsLoading(false);
-        return { success: false, error: data.error || 'Login gagal' };
+        return { success: false, error: data.error || 'Login gagal', user: undefined };
       }
       const userData: User = {
         id: data.user.id,
         email: data.user.email,
         fullName: data.user.fullName,
         role: data.user.role,
+        levelProgram: data.user.levelProgram,
       };
       setUser(userData);
-      localStorage.setItem('baitul_user', JSON.stringify(userData));
+      try { localStorage.setItem('baitul_user', JSON.stringify(userData)); } catch {}
       setIsLoading(false);
-      return { success: true };
+      return { success: true, user: userData };
     } catch {
       setIsLoading(false);
-      return { success: false, error: 'Terjadi kesalahan koneksi' };
+      return { success: false, error: 'Terjadi kesalahan koneksi', user: undefined };
     }
   };
 
-  const logout = () => {
-    fetch('/api/auth/login', { method: 'DELETE' }).catch(() => {});
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/login', { method: 'DELETE' });
+    } catch {}
     setUser(null);
-    localStorage.removeItem('baitul_user');
+    try {
+      localStorage.removeItem('baitul_user');
+      localStorage.removeItem('baitul_session');
+    } catch {}
     window.location.href = '/login';
   };
 

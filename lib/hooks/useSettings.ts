@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useSettingsData } from './useApi';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface AppSettings {
   appName: string;
@@ -12,31 +13,17 @@ export interface AppSettings {
 
 const DEFAULT_SETTINGS: AppSettings = {
   appName: 'Baitul Huffaz',
-  systemInfo: 'Sistem Manajemen Hafalan',
+  systemInfo: 'Sistem Manajemen Tahsin',
   logoUrl: '',
   pwaIconUrl: '',
   tahunAjaran: '2024/2025',
 };
 
-async function fetchSettings(): Promise<AppSettings> {
-  try {
-    const res = await fetch('/api/settings');
-    const data = await res.json();
-    if (data.data) {
-      return { ...DEFAULT_SETTINGS, ...data.data };
-    }
-  } catch {
-    // fallback to localStorage if API unavailable
-  }
-  return DEFAULT_SETTINGS;
-}
-
 export function useSettings() {
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const qc = useQueryClient();
+  const { data: raw } = useSettingsData();
 
-  useEffect(() => {
-    fetchSettings().then(setSettings);
-  }, []);
+  const settings: AppSettings = { ...DEFAULT_SETTINGS, ...raw?.data };
 
   const saveSettings = async (newSettings: Partial<AppSettings>) => {
     try {
@@ -45,13 +32,11 @@ export function useSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSettings),
       });
-      setSettings(prev => ({ ...prev, ...newSettings }));
+      qc.invalidateQueries({ queryKey: ['settings'] });
     } catch {
-      // fallback to localStorage
       const current = JSON.parse(localStorage.getItem('baitul_settings') || '{}');
       const updated = { ...current, ...newSettings };
       localStorage.setItem('baitul_settings', JSON.stringify(updated));
-      setSettings(prev => ({ ...prev, ...newSettings }));
     }
   };
 
