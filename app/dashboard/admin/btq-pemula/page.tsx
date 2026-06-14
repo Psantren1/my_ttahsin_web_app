@@ -108,7 +108,7 @@ export default function ManajemenBtqPemula() {
               </div>
               <div className="space-y-1">
                 <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900 leading-tight">Manajemen BTQ Pemula</h1>
-                <p className="text-tosca-600 font-medium">Kelola data Baca Tulis Quran Pemula siswa Baitul Huffaz.</p>
+                <p className="text-tosca-600 font-medium">Kelola data Baca Tulis Quran Pemula siswa Manajemen Al-Quran.</p>
               </div>
             </div>
           </div>

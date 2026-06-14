@@ -86,7 +86,7 @@ export default function ManajemenJadwal() {
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-surface-100 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900">Manajemen Jadwal</h1>
-              <p className="text-tosca-600 font-medium">Atur jadwal kegiatan halaqah dan akademik Baitul Huffaz.</p>
+              <p className="text-tosca-600 font-medium">Atur jadwal kegiatan halaqah dan akademik Manajemen Al-Quran.</p>
             </div>
             <div className="flex items-center gap-4">
               {showToast && (

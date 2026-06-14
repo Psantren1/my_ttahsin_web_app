@@ -99,12 +99,12 @@ export default function Pengaturan() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-tosca-900 ml-1">Nama Aplikasi (Baitul Huffaz)</label>
+                  <label className="text-sm font-bold text-tosca-900 ml-1">Nama Aplikasi (Manajemen Al-Quran)</label>
                   <input 
                     type="text" 
                     value={appName} 
                     onChange={(e) => setAppName(e.target.value)}
-                    placeholder="Baitul Huffaz"
+                    placeholder="Manajemen Al-Quran"
                     required
                     className="w-full px-5 py-3.5 rounded-2xl border-2 border-surface-100 focus:border-tosca-600 focus:ring-0 text-sm font-bold text-black transition-all bg-tosca-50/20" 
                   />

@@ -111,7 +111,7 @@ export default function ManajemenMurojaah() {
               </div>
               <div className="space-y-1">
                 <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900 leading-tight">Manajemen Murojaah</h1>
-                <p className="text-tosca-600 font-medium">Kelola data murojaah (pengulangan hafalan) siswa Baitul Huffaz.</p>
+                <p className="text-tosca-600 font-medium">Kelola data murojaah (pengulangan hafalan) siswa Manajemen Al-Quran.</p>
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-# Analisis Alur Kerja Baitul Huffaz
+# Analisis Alur Kerja Manajemen Al-Quran
 
 ## Ringkasan Relasi Antar Role
 

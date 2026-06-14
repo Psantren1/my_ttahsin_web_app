@@ -1,6 +1,6 @@
 @echo off
 echo ===================================================
-echo   BAITUL HUFFAZ - RESET NEXT.JS CACHE & SERVER
+echo   MANAJEMEN AL-QURAN - RESET NEXT.JS CACHE & SERVER
 echo ===================================================
 echo.
 echo 1. Mematikan semua proses Node.js / Next.js...

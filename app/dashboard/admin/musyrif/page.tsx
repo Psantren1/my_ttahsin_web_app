@@ -272,7 +272,7 @@ export default function ManajemenMusyrif() {
               </div>
               <div className="space-y-1">
                 <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900">Manajemen Guru</h1>
-                <p className="text-tosca-600 font-medium">Kelola data & akun login Guru Baitul Huffaz.</p>
+                <p className="text-tosca-600 font-medium">Kelola data & akun login Guru Manajemen Al-Quran.</p>
               </div>
             </div>
             {showToast && (

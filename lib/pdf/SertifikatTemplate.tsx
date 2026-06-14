@@ -665,7 +665,7 @@ export function SertifikatPDF({ data }: { data: SertifikatData }) {
       title={`Sertifikat Tahfizh - ${santriName}`}
       author={namaSekolah}
       subject="Sertifikat Tahsin Al-Quran"
-      creator="Baitul Huffaz System"
+      creator="Manajemen Al-Quran System"
     >
       {/* ═══════════════════════════════════════════════════════
           HALAMAN 1 — SERTIFIKAT UTAMA
@@ -698,7 +698,7 @@ export function SertifikatPDF({ data }: { data: SertifikatData }) {
 
         {/* ── Judul Sertifikat ── */}
         <View style={styles.judulWrapper}>
-          <Text style={styles.judulHiasan}>✦  Baitul Huffaz  ✦</Text>
+          <Text style={styles.judulHiasan}>✦  Manajemen Al-Quran  ✦</Text>
           <Text style={styles.judulUtama}>SERTIFIKAT TAHFIZH AL-QURAN</Text>
           <Text style={styles.judulSub}>Tahfizh Al-Quran Bil Hifdz Wal Itqan</Text>
           <Text style={styles.nomorSertifikat}>No. {nomorSertifikat}</Text>

@@ -113,7 +113,7 @@ export default function ManajemenTahfidz() {
               </div>
               <div className="space-y-1">
                 <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900 leading-tight">Manajemen Tahfidz</h1>
-                <p className="text-tosca-600 font-medium">Kelola data hafalan Al-Qur&apos;an siswa Baitul Huffaz.</p>
+                <p className="text-tosca-600 font-medium">Kelola data hafalan Al-Qur&apos;an siswa Manajemen Al-Quran.</p>
               </div>
             </div>
           </div>

@@ -137,7 +137,7 @@ export default function ManajemenKehadiran() {
               <h1 className="text-2xl sm:text-3xl font-bold text-tosca-900 flex items-center gap-2">
                 <ClipboardCheck className="text-tosca-600" size={32} /> Manajemen Kehadiran
               </h1>
-              <p className="text-tosca-600 font-semibold">Rekapitulasi persentase presensi harian siswa Baitul Huffaz.</p>
+              <p className="text-tosca-600 font-semibold">Rekapitulasi persentase presensi harian siswa Manajemen Al-Quran.</p>
             </div>
             
             {/* Class Filter */}

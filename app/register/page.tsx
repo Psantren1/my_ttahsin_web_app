@@ -225,7 +225,7 @@ export default function RegisterPage() {
               </div>
               <div>
                 <h1 className="text-lg font-extrabold text-tosca-900">Pendaftaran Siswa Baru</h1>
-                <p className="text-xs text-tosca-500">Baitul Huffaz Management System</p>
+                <p className="text-xs text-tosca-500">Manajemen Al-Quran Management System</p>
               </div>
             </div>
           </div>

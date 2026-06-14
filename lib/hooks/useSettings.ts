@@ -12,7 +12,7 @@ export interface AppSettings {
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
-  appName: 'Baitul Huffaz',
+  appName: 'Manajemen Al-Quran',
   systemInfo: 'Sistem Manajemen Tahsin',
   logoUrl: '',
   pwaIconUrl: '',
