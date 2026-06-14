@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const publicRoutes = ['/login', '/register', '/forgot-password'];
-const publicApiRoutes = ['/api/auth/login', '/api/auth/register'];
+const publicApiRoutes = ['/api/auth/login', '/api/auth/register', '/api/debug'];
 
 function getSession(request: NextRequest): { id: string; email: string; fullName: string; role: string } | null {
   try {
