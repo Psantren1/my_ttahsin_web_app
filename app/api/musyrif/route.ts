@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
       nip: body.nip,
       username: body.username,
       no_wa: body.no_wa,
-      level_program: body.level_program || 'TAHSIN',
     });
 
     await createAuditLog({

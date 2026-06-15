@@ -32,21 +32,9 @@ interface Musyrif {
   email: string;
   no_wa: string;
   username: string;
-  password: string;
+  password?: string;
   is_active: boolean;
   created_at: string;
-  level_program: string;
-}
-
-// Simple hash function
-function simpleHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return hash.toString(16);
 }
 
 export default function ManajemenMusyrif() {
@@ -69,8 +57,8 @@ export default function ManajemenMusyrif() {
     no_wa: '',
     username: '',
     password: '',
-    level_program: 'TAHSIN',
   });
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, string>>({});
 
   const qc = useQueryClient();
   const { data: musyrifData } = useMusyrifList();
@@ -87,7 +75,7 @@ export default function ManajemenMusyrif() {
       email: m.email || '',
       no_wa: m.no_wa || '',
       username: m.username || '',
-      password: '',
+      password: undefined,
       is_active: m.is_active,
       created_at: m.created_at || '',
     }));
@@ -131,7 +119,6 @@ export default function ManajemenMusyrif() {
       no_wa: '',
       username: '',
       password: '',
-      level_program: 'TAHSIN',
     });
     setShowPassword(false);
     setEditingMusyrif(null);
@@ -158,7 +145,6 @@ export default function ManajemenMusyrif() {
       no_wa: musyrif.no_wa,
       username: musyrif.username,
       password: '',
-      level_program: musyrif.level_program || 'TAHSIN',
     });
     setIsModalOpen(true);
   };
@@ -178,7 +164,7 @@ export default function ManajemenMusyrif() {
     setIsLoading(true);
 
     try {
-      if (isEditMode && editingMusyrif) {
+        if (isEditMode && editingMusyrif) {
         const res = await fetch(`/api/musyrif/${editingMusyrif.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -186,7 +172,6 @@ export default function ManajemenMusyrif() {
             full_name: formData.nama_lengkap,
             no_wa: formData.no_wa,
             username: formData.username,
-            level_program: formData.level_program,
             ...(formData.email ? { email: formData.email } : {}),
             ...(formData.password ? { password: formData.password } : {}),
           }),
@@ -195,15 +180,17 @@ export default function ManajemenMusyrif() {
         triggerToast('Data Guru Berhasil Diperbarui!');
         qc.invalidateQueries({ queryKey: ['musyrif'] } as any);
       } else {
-        await createMusyrif.mutateAsync({
+        const resp: any = await createMusyrif.mutateAsync({
           email: formData.email,
           password: formData.password,
           full_name: formData.nama_lengkap,
           nip: formData.nip,
           username: formData.username,
           no_wa: formData.no_wa,
-          level_program: formData.level_program,
         });
+        if (resp?.data?.id) {
+          setVisiblePasswords(prev => ({ ...prev, [resp.data.id]: formData.password }));
+        }
         triggerToast(`Guru "${formData.nama_lengkap}" berhasil ditambahkan!`);
       }
     } catch (err: any) {
@@ -390,9 +377,13 @@ export default function ManajemenMusyrif() {
                         </td>
                         <td className="px-4 py-3 text-sm font-mono text-tosca-700 bg-tosca-50/50 rounded">{m.username || '-'}</td>
                         <td className="px-4 py-3 text-center">
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-500 rounded text-[10px] font-bold">
-                            ********
-                          </span>
+                          {visiblePasswords[m.id] ? (
+                            <span className="px-2.5 py-1 bg-gray-100 text-gray-800 rounded text-[12px] font-mono font-bold">
+                              {visiblePasswords[m.id]}
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 bg-gray-100 text-gray-500 rounded text-[10px] font-bold">-</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1.5">
@@ -516,22 +507,7 @@ export default function ManajemenMusyrif() {
                 </div>
               </div>
 
-              {/* Level Program */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-tosca-700 ml-1">Level Program</label>
-                <select
-                  name="level_program"
-                  value={formData.level_program}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 rounded-xl border border-tosca-100 focus:ring-2 focus:ring-tosca-500 text-sm text-[#0B7D72]"
-                >
-                  <option value="BTQ_PEMULA">BTQ Pemula (BTQ1)</option>
-                  <option value="BTQ_LANJUTAN">BTQ Lanjutan (BTQ2)</option>
-                  <option value="TAHSIN">Tahsin</option>
-                  <option value="TAHFIDZ">Tahfidz</option>
-                  <option value="MUROJAAH">Murojaah</option>
-                </select>
-              </div>
+              {/* Level Program removed per request */}
 
               {/* Info Akun Login */}
               <div className="bg-purple-50/50 rounded-2xl p-4 border border-purple-100">
