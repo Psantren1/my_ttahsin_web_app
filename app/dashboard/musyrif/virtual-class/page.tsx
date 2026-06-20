@@ -138,7 +138,7 @@ export default function VirtualClassMusyrifPage() {
               <div className="space-y-1">
                 <h3 className="text-base font-extrabold text-tosca-950">Belum Ada Pertemuan</h3>
                 <p className="text-xs text-tosca-500 max-w-xs mx-auto">
-                  Silakan klik tombol "Tambah Pertemuan" di atas untuk membuat kelas virtual pertama Anda.
+                   Silakan klik tombol &quot;Tambah Pertemuan&quot; di atas untuk membuat kelas virtual pertama Anda.
                 </p>
               </div>
             </div>

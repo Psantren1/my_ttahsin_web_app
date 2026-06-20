@@ -2,6 +2,7 @@
 
 import { useSettingsData } from './useApi';
 import { useQueryClient } from '@tanstack/react-query';
+import { apiFetch } from '@/lib/api/client';
 
 export interface AppSettings {
   appName: string;
@@ -26,18 +27,12 @@ export function useSettings() {
   const settings: AppSettings = { ...DEFAULT_SETTINGS, ...raw?.data };
 
   const saveSettings = async (newSettings: Partial<AppSettings>) => {
-    try {
-      await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSettings),
-      });
-      qc.invalidateQueries({ queryKey: ['settings'] });
-    } catch {
-      const current = JSON.parse(localStorage.getItem('baitul_settings') || '{}');
-      const updated = { ...current, ...newSettings };
-      localStorage.setItem('baitul_settings', JSON.stringify(updated));
-    }
+    await apiFetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newSettings),
+    });
+    qc.invalidateQueries({ queryKey: ['settings'] });
   };
 
   return { settings, saveSettings };

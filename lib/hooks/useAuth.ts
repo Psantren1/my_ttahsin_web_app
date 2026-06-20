@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api/client';
 
 export interface User {
   id: string;
@@ -95,8 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getSantriList = async (): Promise<User[]> => {
     try {
-      const res = await fetch('/api/santri');
-      const data = await res.json();
+      const data = await apiFetch<{ data: any[] }>('/api/santri');
       return (data.data || []).map((u: any) => ({
         id: u.id,
         email: u.email,
@@ -112,8 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getMusyrifList = async (): Promise<User[]> => {
     try {
-      const res = await fetch('/api/musyrif');
-      const data = await res.json();
+      const data = await apiFetch<{ data: any[] }>('/api/musyrif');
       return (data.data || []).map((u: any) => ({
         id: u.id,
         email: u.email,
@@ -129,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const addSantri = async (santri: User & { password: string }): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('/api/santri', {
+      const data = await apiFetch<any>('/api/santri', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -139,8 +138,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nis: santri.nis,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error || 'Gagal menambahkan' };
       return { success: true };
     } catch {
       return { success: false, error: 'Gagal menambahkan akun' };
@@ -149,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const addMusyrif = async (musyrif: User & { password: string }): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('/api/musyrif', {
+      const data = await apiFetch<any>('/api/musyrif', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,8 +156,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nip: musyrif.nip,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error || 'Gagal menambahkan' };
       return { success: true };
     } catch {
       return { success: false, error: 'Gagal menambahkan akun' };
@@ -169,8 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const deleteSantri = async (id: string): Promise<{ success: boolean }> => {
     try {
-      const res = await fetch(`/api/santri/${id}`, { method: 'DELETE' });
-      return { success: res.ok };
+      await apiFetch(`/api/santri/${id}`, { method: 'DELETE' });
+      return { success: true };
     } catch {
       return { success: false };
     }
@@ -178,8 +173,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const deleteMusyrif = async (id: string): Promise<{ success: boolean }> => {
     try {
-      const res = await fetch(`/api/musyrif/${id}`, { method: 'DELETE' });
-      return { success: res.ok };
+      await apiFetch(`/api/musyrif/${id}`, { method: 'DELETE' });
+      return { success: true };
     } catch {
       return { success: false };
     }

@@ -94,7 +94,7 @@ export default function ManajemenTahsinAdminPage() {
           tajwid: r.tajwid_score || 0,
           makhraj: r.makhraj_score || 0,
           kelancaran: r.kelancaran_score || 0,
-          rata: r.rata_rata || 0,
+          rata: Number(r.rata_rata) || 0,
           status: r.status === 'LANJUT' ? 'Lanjut' as const : 'Ulang' as const,
           createdAt: r.created_at || ''
         }));

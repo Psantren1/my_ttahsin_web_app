@@ -411,7 +411,7 @@ export default function ManajemenMusyrif() {
                   ) : (
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center text-tosca-500 font-medium italic">
-                        Tidak ada guru yang ditemukan dengan kata kunci "{searchTerm}"
+                        Tidak ada guru yang ditemukan dengan kata kunci &quot;{searchTerm}&quot;
                       </td>
                     </tr>
                   )}

@@ -77,7 +77,7 @@ export default function EvaluasiSantriPage() {
         </div>
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2.5 relative z-10">Catatan Pembimbing</p>
         <p className="text-sm text-slate-800 leading-relaxed font-semibold relative z-10 max-w-xl">
-          "{displayCatatan}"
+          &ldquo;{displayCatatan}&rdquo;
         </p>
       </div>
     </div>

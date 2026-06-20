@@ -849,7 +849,7 @@ export function SertifikatPDF({ data }: { data: SertifikatData }) {
         {catatan ? (
           <View style={styles.catatanBox}>
             <Text style={styles.catatanLabel}>Catatan Guru</Text>
-            <Text style={styles.catatanText}>"{catatan}"</Text>
+            <Text style={styles.catatanText}>&ldquo;{catatan}&rdquo;</Text>
           </View>
         ) : null}
 

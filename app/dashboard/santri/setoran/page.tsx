@@ -36,7 +36,7 @@ const LEVEL_MAP: Record<string, (r: any) => SetoranRecord> = {
     kelasNama: r.kelas_nama || '', nis: r.nis || '',
     detail1: r.surah || '', detail2: r.ayat_start ? (r.ayat_end ? `${r.ayat_start}-${r.ayat_end}` : String(r.ayat_start)) : '',
     score1: r.tajwid_score || 0, score2: r.makhraj_score || 0, score3: r.kelancaran_score || 0,
-    rata: r.rata_rata || 0, status: r.status === 'LANJUT' ? 'Lanjut' : 'Ulang',
+    rata: Number(r.rata_rata) || 0, status: r.status === 'LANJUT' ? 'Lanjut' : 'Ulang',
     createdAt: r.created_at || '',
   }),
   BTQ_PEMULA: (r) => ({

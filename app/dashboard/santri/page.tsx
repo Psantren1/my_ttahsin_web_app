@@ -75,7 +75,7 @@ export default function SantriDashboard() {
           santriId: r.santuario_id,
           nis: r.nis || '',
           santriName: r.santri_name || '',
-          rata: r.rata_rata || 0,
+          rata: Number(r.rata_rata) || 0,
         }));
         const myTahsin = allTahsin.filter((r: any) => 
           r.santriId === user.id || 

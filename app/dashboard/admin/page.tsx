@@ -107,7 +107,7 @@ export default function AdminDashboard() {
     target: r.santri_name || '-',
     time: r.created_at || 'Baru saja',
     status: r.status === 'LANJUT' ? 'Lancar' : 'Ulang',
-    detail: `Siswa ${r.santri_name || '-'} menyetorkan ${r.surah || '—'} dengan rata-rata ${(r.rata_rata || 0).toFixed(1)}.`
+    detail: `Siswa ${r.santri_name || '-'} menyetorkan ${r.surah || '—'} dengan rata-rata ${(Number(r.rata_rata) || 0).toFixed(1)}.`
   }));
 
   const handleQuickAdd = async (e: React.FormEvent) => {

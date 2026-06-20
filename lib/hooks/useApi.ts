@@ -1,38 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiFetch } from '@/lib/api/client';
 
 async function fetcher<T = any>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`GET ${url} failed: ${res.status}`);
-  return res.json();
+  return apiFetch<T>(url);
 }
 
 async function poster<T = any>(url: string, body: any): Promise<T> {
-  const res = await fetch(url, {
+  return apiFetch<T>(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.error || 'Gagal menyimpan data');
-  }
-  return res.json();
 }
 
 async function putter<T = any>(url: string, body: any): Promise<T> {
-  const res = await fetch(url, {
+  return apiFetch<T>(url, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`PUT ${url} failed: ${res.status}`);
-  return res.json();
 }
 
 async function deleter<T = any>(url: string): Promise<T> {
-  const res = await fetch(url, { method: 'DELETE' });
-  if (!res.ok) throw new Error(`DELETE ${url} failed: ${res.status}`);
-  return res.json();
+  return apiFetch<T>(url, { method: 'DELETE' });
 }
 
 // ─── Query Key Factory ────────────────────────────────────────────

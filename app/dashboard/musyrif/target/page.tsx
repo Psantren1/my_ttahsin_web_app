@@ -449,7 +449,7 @@ export default function TargetPage() {
                 return (
                   <div key={s.id} className="flex items-start gap-2 text-xs text-slate-600">
                     <span className="font-black text-fuchsia-600 shrink-0">{s.nama_lengkap}:</span>
-                    <span className="font-semibold italic">"{rec.catatan}"</span>
+                    <span className="font-semibold italic">&ldquo;{rec.catatan}&rdquo;</span>
                   </div>
                 );
               })}
