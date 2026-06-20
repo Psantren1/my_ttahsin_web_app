@@ -1,10 +1,23 @@
 'use client';
 
+let isRedirecting = false;
+
 function redirectToLogin() {
   if (typeof window === 'undefined') return;
+  if (isRedirecting) return;
+  isRedirecting = true;
+
   try { localStorage.removeItem('baitul_user'); } catch {}
+
   const currentPath = window.location.pathname + window.location.search;
-  window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+
+  if (currentPath.startsWith('/login')) {
+    isRedirecting = false;
+    return;
+  }
+
+  const redirectParam = encodeURIComponent(currentPath.slice(0, 200));
+  window.location.href = `/login?redirect=${redirectParam}`;
 }
 
 export async function apiFetch<T = any>(url: string, options?: RequestInit): Promise<T> {
