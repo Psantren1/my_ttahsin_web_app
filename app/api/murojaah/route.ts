@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllMurojaah, getMurojaahByKelas, getMurojaahBySantri, getMurojaahByMusyrif, upsertMurojaah } from '@/lib/services/murojaah.service';
+import { requireRole } from '@/lib/auth/auth';
+import { createAuditLog } from '@/lib/services/audit.service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,8 +29,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const body = await request.json();
     const data = await upsertMurojaah(body);
+
+    await createAuditLog({
+      userId: session.userId,
+      action: 'CREATE',
+      entityType: 'murojaah',
+      entityId: data.id,
+      newValues: {
+        santuario_id: body.santuario_id,
+        juz: body.juz,
+        surah: body.surah,
+        nilai: body.nilai,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
+
     return NextResponse.json({ data });
   } catch (error) {
     return NextResponse.json({ error: 'Gagal menyimpan data Murojaah' }, { status: 500 });

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db/client';
+import { requireRole } from '@/lib/auth/auth';
+import { createAuditLog } from '@/lib/services/audit.service';
 
 export interface ZoomMeeting {
   id: string;
@@ -43,6 +45,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const body = await request.json();
     const sql = `
       INSERT INTO zoom_meetings (musyrif_id, topic, description, meeting_date, meeting_time, duration, link, password, host_name)
@@ -54,6 +60,24 @@ export async function POST(request: NextRequest) {
       body.meeting_date, body.meeting_time, body.duration,
       body.link, body.password ?? null, body.host_name ?? null
     ]);
+    if (!data) {
+      return NextResponse.json({ error: 'Gagal menyimpan meeting' }, { status: 500 });
+    }
+
+    await createAuditLog({
+      userId: session.userId,
+      action: 'CREATE',
+      entityType: 'zoom_meetings',
+      entityId: data.id,
+      newValues: {
+        topic: body.topic,
+        meeting_date: body.meeting_date,
+        meeting_time: body.meeting_time,
+        duration: body.duration,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
+
     return NextResponse.json({ data });
   } catch (error) {
     return NextResponse.json({ error: 'Gagal menyimpan meeting' }, { status: 500 });

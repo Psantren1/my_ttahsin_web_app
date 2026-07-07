@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllSetoran, getSetoranBySantri, getSetoranByMusyrif, createSetoran } from '@/lib/services/hafalan.service';
+import { requireRole } from '@/lib/auth/auth';
+import { createAuditLog } from '@/lib/services/audit.service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,8 +25,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const body = await request.json();
     const setoran = await createSetoran(body);
+
+    await createAuditLog({
+      userId: session.userId,
+      action: 'CREATE',
+      entityType: 'setoran',
+      entityId: setoran.id,
+      newValues: {
+        santuario_id: body.santuario_id,
+        surah: body.surah,
+        tajwid_score: body.tajwid_score,
+        makhraj_score: body.makhraj_score,
+        kelancaran_score: body.kelancaran_score,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
+
     return NextResponse.json({ data: setoran });
   } catch (error) {
     return NextResponse.json({ error: 'Gagal menyimpan setoran' }, { status: 500 });

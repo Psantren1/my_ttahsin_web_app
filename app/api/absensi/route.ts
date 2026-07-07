@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllAbsensi, getAbsensiBySantri, getAbsensiByDate, getAbsensiByKelas, createAbsensi, upsertAbsensi } from '@/lib/services/absensi.service';
+import { requireRole } from '@/lib/auth/auth';
+import { createAuditLog } from '@/lib/services/audit.service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,12 +28,32 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const body = await request.json();
+    let absensi;
+
     if (body.upsert) {
-      const absensi = await upsertAbsensi(body);
-      return NextResponse.json({ data: absensi });
+      absensi = await upsertAbsensi(body);
+    } else {
+      absensi = await createAbsensi(body);
     }
-    const absensi = await createAbsensi(body);
+
+    await createAuditLog({
+      userId: session.userId,
+      action: 'CREATE',
+      entityType: 'absensi',
+      entityId: absensi.id,
+      newValues: {
+        santuario_id: body.santuario_id,
+        tanggal: body.tanggal,
+        status: body.status,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
+
     return NextResponse.json({ data: absensi });
   } catch (error) {
     return NextResponse.json({ error: 'Gagal menyimpan absensi' }, { status: 500 });

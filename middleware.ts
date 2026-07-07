@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyJWT } from './lib/auth/jwt';
 
 const publicRoutes = ['/login', '/register', '/forgot-password'];
 const publicApiRoutes = ['/api/auth/login', '/api/auth/register', '/api/debug'];
@@ -8,13 +9,15 @@ function getSession(request: NextRequest): { id: string; email: string; fullName
     const cookie = request.cookies.get('baitul_session');
     if (!cookie?.value) return null;
 
-    const parts = cookie.value.split('.');
-    if (parts.length !== 3) return null;
+    const decoded = verifyJWT(cookie.value);
+    if (!decoded) return null;
 
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
-    if (Date.now() > payload.exp) return null;
-
-    return { id: payload.id, email: payload.email, fullName: payload.fullName, role: payload.role };
+    return {
+      id: decoded.id as string,
+      email: decoded.email as string,
+      fullName: decoded.fullName as string,
+      role: decoded.role as string,
+    };
   } catch {
     return null;
   }

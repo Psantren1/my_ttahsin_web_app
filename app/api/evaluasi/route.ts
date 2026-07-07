@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllEvaluasi, getEvaluasiBySantri, getEvaluasiByMusyrif, getEvaluasiByPeriode, createEvaluasi } from '@/lib/services/evaluasi.service';
+import { requireRole } from '@/lib/auth/auth';
+import { createAuditLog } from '@/lib/services/audit.service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,8 +28,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const body = await request.json();
     const evaluasi = await createEvaluasi(body);
+
+    await createAuditLog({
+      userId: session.userId,
+      action: 'CREATE',
+      entityType: 'evaluasi',
+      entityId: evaluasi.id,
+      newValues: {
+        santuario_id: body.santuario_id,
+        predikat_adab: body.predikat_adab,
+        predikat_kedisiplinan: body.predikat_kedisiplinan,
+        catatan: body.catatan,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
+
     return NextResponse.json({ data: evaluasi });
   } catch (error) {
     return NextResponse.json({ error: 'Gagal menyimpan evaluasi' }, { status: 500 });

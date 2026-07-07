@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllSertifikat, getSertifikatBySantri, syncSertifikatRecords } from '@/lib/services/sertifikat.service';
+import { requireRole } from '@/lib/auth/auth';
+import { createAuditLog } from '@/lib/services/audit.service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,6 +22,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const body = await request.json();
     // Support both single object and { records: [...] } bulk format
     if (body.records && Array.isArray(body.records)) {
@@ -27,6 +33,18 @@ export async function POST(request: NextRequest) {
     } else {
       await syncSertifikatRecords([body]);
     }
+
+    await createAuditLog({
+      userId: session.userId,
+      action: 'CREATE',
+      entityType: 'sertifikat',
+      entityId: 'bulk',
+      newValues: {
+        records_count: body.records ? body.records.length : 1,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
+
     // Return latest data after sync
     const data = await getAllSertifikat();
     return NextResponse.json({ data });

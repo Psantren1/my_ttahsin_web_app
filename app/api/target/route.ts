@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db/client';
+import { requireRole } from '@/lib/auth/auth';
+import { createAuditLog } from '@/lib/services/audit.service';
 
 export interface TargetTahsin {
   id: string;
@@ -54,6 +56,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const body = await request.json();
     const sql = `
       INSERT INTO target_Tahsin (santuario_id, surah, ayat_start, ayat_end, juz, progres, target_date, status, catatan)
@@ -64,6 +70,24 @@ export async function POST(request: NextRequest) {
       body.santuario_id, body.surah, body.ayat_start ?? null, body.ayat_end ?? null,
       body.juz ?? null, body.progres ?? 0, body.target_date, body.status ?? 'BELUM', body.catatan ?? null
     ]);
+    if (!data) {
+      return NextResponse.json({ error: 'Gagal menyimpan target' }, { status: 500 });
+    }
+
+    await createAuditLog({
+      userId: session.userId,
+      action: 'CREATE',
+      entityType: 'target_Tahsin',
+      entityId: data.id,
+      newValues: {
+        santuario_id: body.santuario_id,
+        surah: body.surah,
+        juz: body.juz,
+        target_date: body.target_date,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || null,
+    });
+
     return NextResponse.json({ data });
   } catch (error) {
     return NextResponse.json({ error: 'Gagal menyimpan target' }, { status: 500 });

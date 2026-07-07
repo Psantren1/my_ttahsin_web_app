@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 import { verifyJWT, signJWT } from './jwt';
 
 const SESSION_COOKIE_NAME = 'baitul_session';
@@ -49,6 +50,22 @@ export async function getSession(): Promise<Session | null> {
   } catch {
     return null;
   }
+}
+
+export async function requireRole(
+  allowedRoles: string[]
+): Promise<{ session: Session | null; error: NextResponse | null }> {
+  const session = await getSession();
+  if (!session || !allowedRoles.includes(session.role)) {
+    return {
+      session: null,
+      error: NextResponse.json(
+        { error: 'Akses ditolak — role tidak memiliki izin' },
+        { status: 403 }
+      ),
+    };
+  }
+  return { session, error: null };
 }
 
 export async function clearSession(): Promise<void> {
