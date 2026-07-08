@@ -13,7 +13,7 @@ function getSession(request: NextRequest): { id: string; email: string; fullName
     if (!decoded) return null;
 
     return {
-      id: decoded.id as string,
+      id: decoded.userId as string,
       email: decoded.email as string,
       fullName: decoded.fullName as string,
       role: decoded.role as string,

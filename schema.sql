@@ -409,12 +409,12 @@ CREATE INDEX idx_zoom_meeting_date ON zoom_meetings(meeting_date);
 -- Default Admin
 INSERT INTO users (id, email, password_hash, full_name, role)
 VALUES (
-  'admin-default-001',
+  gen_random_uuid(),
   'admin@tahsin.com',
   '$2b$10$0lZm9Xx85JQxkWiD1LBWLOzsOVEZyHtsdS2Kw.C3NgUk0beIN2Cdy', -- bcrypt('admin456')
   'Admin Utama',
   'ADMIN'
-) ON CONFLICT (id) DO NOTHING;
+) ON CONFLICT (email) DO NOTHING;
 
 -- Default Settings
 INSERT INTO app_settings (key, value) VALUES

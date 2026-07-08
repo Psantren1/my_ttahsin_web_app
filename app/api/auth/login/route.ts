@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionToken = signJWT({
-      id: user.id,
+      userId: user.id,
       email: user.email,
       fullName: user.full_name,
       role: user.role,
