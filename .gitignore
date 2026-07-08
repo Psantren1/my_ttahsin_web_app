@@ -43,5 +43,10 @@ next-env.d.ts
 # OS
 Thumbs.db
 
+# Firebase
+firebase-debug.log
+firebase-debug.*.log
+functions/node_modules/
+
 # Public upload (if any)
 public/uploads/

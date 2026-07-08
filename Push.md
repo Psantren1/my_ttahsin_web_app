@@ -35,4 +35,55 @@ fix: Tambah role-based access control di semua GET endpoints & setting/debug cri
 git push origin main
 ```
 
-> **Note:** Push gagal dengan error 403 (permission denied). Gunakan git credentials yang memiliki akses ke repo `Psantren1/my_ttahsin_web_app`.
+## Deploy to Firebase
+
+### Prasyarat
+- Firebase console: sudah punya project di https://console.firebase.google.com
+- Firebase CLI: sudah terinstall (`firebase --version`)
+
+### Langkah Deploy
+
+**1. Login Firebase CLI**
+```bash
+firebase login
+```
+
+**2. Set Project ID**
+Edit `.firebaserc` — ganti `GANTI_DENGAN_PROJECT_ID_ANDA` dengan ID project Firebase kamu.
+
+Atau:
+```bash
+firebase use --add
+```
+
+**3. Install dependencies functions**
+```bash
+cd functions
+npm install
+cd ..
+```
+
+**4. Build Next.js**
+```bash
+npm run build
+```
+
+**5. Set Environment Variables di Firebase**
+```bash
+firebase functions:config:set app.database_url="postgresql://..." app.jwt_secret="your-secret"
+```
+
+Atau set via **Firebase Console > Functions > Environment Variables**.
+
+**6. Deploy**
+```bash
+firebase deploy --only functions,hosting
+```
+
+### File Konfigurasi
+| File | Fungsi |
+|------|--------|
+| `firebase.json` | Config hosting + cloud functions |
+| `.firebaserc` | Project ID Firebase |
+| `functions/index.js` | Next.js server handler |
+| `functions/package.json` | Dependencies functions |
