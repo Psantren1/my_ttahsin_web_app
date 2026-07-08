@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllKelas, createKelas } from '@/lib/services/kelas.service';
-import { getSession } from '@/lib/auth/auth';
+import { getSession, requireRole } from '@/lib/auth/auth';
 
 export async function GET() {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF', 'SANTRI']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const data = await getAllKelas();
     return NextResponse.json({ data });
   } catch (error) {

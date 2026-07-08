@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserById, updateUser, deleteUser } from '@/lib/services/user.service';
-import { getSession } from '@/lib/auth/auth';
+import { getSession, requireRole } from '@/lib/auth/auth';
 import { createAuditLog } from '@/lib/services/audit.service';
 
 function requireAdmin(session: any): NextResponse | null {
@@ -12,6 +12,10 @@ function requireAdmin(session: any): NextResponse | null {
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const { session, error } = await requireRole(['ADMIN']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const user = await getUserById(params.id);
     if (!user || user.role !== 'MUSYRIF') {
       return NextResponse.json({ error: 'Musyrif tidak ditemukan' }, { status: 404 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db/client';
+import { requireRole } from '@/lib/auth/auth';
 
 export interface AppSetting {
   id: string;
@@ -11,6 +12,10 @@ export interface AppSetting {
 
 export async function GET() {
   try {
+    const { session, error } = await requireRole(['ADMIN']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const data = await query<AppSetting>('SELECT * FROM app_settings ORDER BY key ASC');
     const settings: Record<string, string> = {};
     for (const row of data) {
@@ -28,6 +33,10 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const body = await request.json();
     for (const [key, value] of Object.entries(body)) {
       const stringValue = typeof value === 'string' ? value : JSON.stringify(value);

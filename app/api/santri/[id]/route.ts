@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserById, updateUser, deleteUser } from '@/lib/services/user.service';
-import { getSession } from '@/lib/auth/auth';
+import { getSession, requireRole } from '@/lib/auth/auth';
 import { createAuditLog } from '@/lib/services/audit.service';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF', 'SANTRI']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
+    if (session.role === 'SANTRI' && session.userId !== params.id) {
+      return NextResponse.json({ error: 'Akses ditolak — Anda hanya dapat melihat data sendiri' }, { status: 403 });
+    }
+
     const user = await getUserById(params.id);
     if (!user || user.role !== 'SANTRI') {
       return NextResponse.json({ error: 'Santri tidak ditemukan' }, { status: 404 });

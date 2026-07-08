@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getKelasById, updateKelas, deleteKelas } from '@/lib/services/kelas.service';
-import { getSession } from '@/lib/auth/auth';
+import { getSession, requireRole } from '@/lib/auth/auth';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF', 'SANTRI']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const data = await getKelasById(params.id);
     if (!data) {
       return NextResponse.json({ error: 'Kelas tidak ditemukan' }, { status: 404 });

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllUsersByRole, createUser } from '@/lib/services/user.service';
-import { getSession } from '@/lib/auth/auth';
+import { getSession, requireRole } from '@/lib/auth/auth';
 import { createAuditLog } from '@/lib/services/audit.service';
 
 export async function GET() {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const santri = await getAllUsersByRole('SANTRI');
     return NextResponse.json({ data: santri });
   } catch (error) {

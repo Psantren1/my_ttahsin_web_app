@@ -5,13 +5,19 @@ import { createAuditLog } from '@/lib/services/audit.service';
 
 export async function GET(request: NextRequest) {
   try {
+    const { session, error } = await requireRole(['ADMIN', 'MUSYRIF', 'SANTRI']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const santuario_id = searchParams.get('santuario_id');
     const tanggal = searchParams.get('tanggal');
     const kelas_id = searchParams.get('kelas_id');
 
     let data;
-    if (santuario_id) {
+    if (session.role === 'SANTRI') {
+      data = await getAbsensiBySantri(session.userId);
+    } else if (santuario_id) {
       data = await getAbsensiBySantri(santuario_id);
     } else if (tanggal) {
       data = await getAbsensiByDate(tanggal);

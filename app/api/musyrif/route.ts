@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllUsersByRole, createUser } from '@/lib/services/user.service';
-import { getSession } from '@/lib/auth/auth';
+import { getSession, requireRole } from '@/lib/auth/auth';
 import { createAuditLog } from '@/lib/services/audit.service';
 
 const DUPLICATE_MESSAGES: Record<string, string> = {
@@ -12,6 +12,10 @@ const DUPLICATE_MESSAGES: Record<string, string> = {
 
 export async function GET() {
   try {
+    const { session, error } = await requireRole(['ADMIN']);
+    if (error) return error;
+    if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
+
     const musyrif = await getAllUsersByRole('MUSYRIF');
     return NextResponse.json({ data: musyrif });
   } catch (error) {

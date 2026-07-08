@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { pool, query } from '@/lib/db/client';
+import { requireRole } from '@/lib/auth/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const { session, error } = await requireRole(['ADMIN']);
+  if (error) return error;
+  if (!session) return NextResponse.json({ error: 'Session tidak valid' }, { status: 401 });
   const results: Record<string, unknown> = {};
 
   // 1. Cek DATABASE_URL (without credentials)
